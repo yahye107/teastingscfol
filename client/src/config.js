@@ -1,0 +1,800 @@
+export const LoginFormControls = [
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "Enter your email",
+    componentType: "input",
+    type: "email",
+  },
+  {
+    id: "password",
+    label: "Password",
+    placeholder: "Enter your password",
+    componentType: "input",
+    type: "password",
+  },
+];
+export const ParantsFormControls = [
+  {
+    id: "fullName",
+    label: "Full Name",
+    placeholder: "Enter your full name",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "Enter your email",
+    componentType: "input",
+    type: "email",
+  },
+  {
+    id: "occupation",
+    label: "Occupation",
+    placeholder: "Enter your occupation",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "contact",
+    label: "Contact Number",
+    placeholder: "Enter your contact number",
+    componentType: "input",
+    type: "tel",
+  },
+  {
+    id: "address",
+    label: "Address",
+    placeholder: "Enter your address",
+    componentType: "input",
+    type: "text",
+  },
+];
+export const StudentFormControls = [
+  {
+    id: "fullName",
+    label: "Full Name",
+    placeholder: "Enter full name",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "Enter email",
+    componentType: "input",
+    type: "email",
+  },
+  {
+    id: "dob",
+    label: "Date of Birth",
+    placeholder: "Select date of birth",
+    componentType: "input",
+    type: "date",
+  },
+  {
+    id: "age",
+    label: "Age",
+    placeholder: "Enter age",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "gender",
+    label: "Gender",
+    placeholder: "Select gender",
+    componentType: "select",
+    options: [
+      { label: "Male", value: "Male" },
+      { label: "Female", value: "Female" },
+    ],
+  },
+  {
+    id: "classId",
+    label: "Class",
+    placeholder: "Search and select class",
+    componentType: "search-select",
+    dynamic: true,
+  },
+  {
+    id: "parentId",
+    label: "Parent",
+    placeholder: "Search and select parent",
+    componentType: "search-select",
+    dynamic: true,
+  },
+  {
+    id: "contact",
+    label: "Contact Number",
+    placeholder: "Enter contact number",
+    componentType: "input",
+    type: "tel",
+  },
+  {
+    id: "emergencyContact",
+    label: "Emergency Contact",
+    placeholder: "Enter emergency contact",
+    componentType: "input",
+    type: "tel",
+  },
+  {
+    id: "address",
+    label: "Address",
+    placeholder: "Enter address",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "previousSchool",
+    label: "Previous School",
+    placeholder: "Enter previous school name",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "monthlyPayment",
+    label: "Monthly Payment",
+    placeholder: "Enter Monthly Payment",
+    componentType: "input",
+    type: "number",
+  },
+];
+export const TeacherFormControls = [
+  {
+    id: "fullName",
+    label: "Full Name",
+    type: "text",
+    componentType: "input",
+    placeholder: "Enter teacher's full name",
+  },
+  {
+    id: "email",
+    label: "Email",
+    type: "email",
+    componentType: "input",
+    placeholder: "Enter teacher's email",
+  },
+  {
+    id: "dob",
+    label: "Date of Birth",
+    type: "date",
+    componentType: "input",
+    placeholder: "Select date of birth",
+  },
+  {
+    id: "age",
+    label: "Age",
+    type: "text",
+    componentType: "input",
+    placeholder: "Enter age",
+  },
+  {
+    id: "gender",
+    label: "Gender",
+    componentType: "select",
+    type: "select",
+    options: [
+      { label: "Male", value: "Male" },
+      { label: "Female", value: "Female" },
+    ],
+    placeholder: "Select gender",
+  },
+  {
+    id: "contact",
+    label: "Contact Number",
+    type: "tel",
+    componentType: "input",
+    placeholder: "Enter contact number",
+  },
+  {
+    id: "address",
+    label: "Address",
+    componentType: "input",
+    type: "text",
+    placeholder: "Enter full address",
+  },
+  {
+    id: "qualification",
+    label: "Qualification",
+    type: "text",
+    componentType: "input",
+    placeholder: "Enter highest qualification",
+  },
+  {
+    id: "experience",
+    label: "Experience (years)",
+    type: "text",
+    componentType: "input",
+    placeholder: "Enter teaching experience",
+  },
+  {
+    id: "SalaryBymonth",
+    label: "Salary By Month",
+    type: "number",
+    componentType: "input",
+    placeholder: "Enter teacher salary",
+  },
+  {
+    id: "subjects",
+    label: "Subject",
+    componentType: "search-select",
+    type: "select",
+    placeholder: "Select subject",
+    dynamic: true,
+  },
+];
+///////////
+export const HallFormControls = [
+  {
+    id: "hallNumber",
+    label: "Hall Number",
+    placeholder: "Enter hall number",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "capacity",
+    label: "Capacity",
+    placeholder: "Enter hall capacity",
+    componentType: "input",
+    type: "number",
+  },
+  {
+    id: "type",
+    label: "Hall Type",
+    placeholder: "Select hall type",
+    componentType: "select",
+    options: [
+      { label: "Exam", value: "exam" },
+      { label: "Classroom", value: "classroom" },
+    ],
+  },
+];
+export const ClassroomFormControls = [
+  {
+    id: "grade",
+    label: "Grade",
+    placeholder: "Enter grade (e.g., 1st, 2nd, 10th)",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "section",
+    label: "Section",
+    placeholder: "Enter section (e.g., A, B, C)",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "classTeacher",
+    label: "Class Teacher",
+    placeholder: "Select class teacher",
+    componentType: "search-select",
+    dynamic: true, // You will search and select a teacher
+  },
+  {
+    id: "academicYear",
+    label: "academicYear",
+    placeholder: "Enter AcademicYear",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "hall",
+    label: "Hall",
+    placeholder: "Select hall",
+    componentType: "search-select",
+    dynamic: true, // Search and select from available halls
+  },
+];
+export const SubjectFormControls = [
+  {
+    id: "name",
+    label: "Name",
+    placeholder: "Enter Subject name",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "code",
+    label: "Code",
+    placeholder: "Enter Subject code",
+    componentType: "input",
+    type: "text",
+  },
+
+  {
+    id: "description",
+    label: "Description",
+    placeholder: "Enter Description",
+    componentType: "textarea",
+    type: "text",
+  },
+];
+export const TimetableFormControls = [
+  {
+    id: "teacherId",
+    label: "Teacher",
+    placeholder: "Select teacher",
+    componentType: "search-select",
+    dynamic: true, // Search and select teacher
+  },
+  {
+    id: "classId",
+    label: "class",
+    placeholder: "Select class",
+    componentType: "search-select",
+    dynamic: true, // Search and select class
+  },
+  {
+    id: "subjectId",
+    label: "Subject",
+    placeholder: "Select subject",
+    componentType: "search-select",
+    dynamic: true, // Search and select subject
+  },
+  {
+    id: "hallId",
+    label: "Hall",
+    placeholder: "Select hall",
+    componentType: "search-select",
+    dynamic: true, // Search and select hall
+  },
+  {
+    id: "day",
+    label: "Day",
+    placeholder: "Select day",
+    componentType: "select",
+    options: [
+      { label: "Monday", value: "Monday" },
+      { label: "Tuesday", value: "Tuesday" },
+      { label: "Wednesday", value: "Wednesday" },
+      { label: "Thursday", value: "Thursday" },
+      { label: "Friday", value: "Friday" },
+      { label: "Saturday", value: "Saturday" },
+      { label: "Sunday", value: "Sunday" },
+    ],
+  },
+  {
+    id: "periodStart",
+    label: "Period Start Time",
+    placeholder: "Select start time",
+    componentType: "input",
+    type: "time",
+  },
+  {
+    id: "periodEnd",
+    label: "Period End Time",
+    placeholder: "Select end time",
+    componentType: "input",
+    type: "time",
+  },
+];
+export const AdminEventFormControls = [
+  {
+    id: "title",
+    label: "Title",
+    placeholder: "Enter event title",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "message",
+    label: "Message",
+    placeholder: "Enter event description",
+    componentType: "textarea",
+  },
+  {
+    id: "audience",
+    label: "Audience",
+    placeholder: "Select audience",
+    componentType: "select",
+    options: [
+      { label: "All", value: "all" },
+      { label: "Students", value: "student" },
+      { label: "Teachers", value: "teacher" },
+      { label: "Parents", value: "parent" },
+      { label: "Staff", value: "staff" },
+    ],
+  },
+  {
+    id: "date",
+    label: "Date",
+    placeholder: "Select date",
+    componentType: "input",
+    type: "date",
+  },
+  {
+    id: "startTime",
+    label: "Start Time",
+    placeholder: "Select start time",
+    componentType: "input",
+    type: "time",
+  },
+  {
+    id: "endTime",
+    label: "End Time",
+    placeholder: "Select end time",
+    componentType: "input",
+    type: "time",
+  },
+];
+export const AdminAnouncementFormControls = [
+  {
+    id: "title",
+    label: "Title",
+    placeholder: "Enter event title",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "message",
+    label: "Message",
+    placeholder: "Enter event description",
+    componentType: "textarea",
+  },
+  {
+    id: "date",
+    label: "Date",
+    placeholder: "Select date",
+    componentType: "input",
+    type: "date",
+  },
+  {
+    id: "audience",
+    label: "Audience",
+    placeholder: "Select audience",
+    componentType: "select",
+    options: [
+      { label: "All", value: "all" },
+      { label: "Students", value: "student" },
+      { label: "Teachers", value: "teacher" },
+      { label: "Parents", value: "parent" },
+      { label: "Staff", value: "staff" },
+    ],
+  },
+];
+export const TeacherEventFormControls = [
+  {
+    id: "title",
+    label: "Title",
+    placeholder: "Enter event title",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "message",
+    label: "Message",
+    placeholder: "Enter event description",
+    componentType: "textarea",
+  },
+  {
+    id: "classId",
+    label: "Class",
+    placeholder: "Search and select class",
+    componentType: "search-select",
+    dynamic: true,
+  },
+  {
+    id: "date",
+    label: "Date",
+    placeholder: "Select date",
+    componentType: "input",
+    type: "date",
+  },
+  {
+    id: "startTime",
+    label: "Start Time",
+    placeholder: "Select start time",
+    componentType: "input",
+    type: "time",
+  },
+  {
+    id: "endTime",
+    label: "End Time",
+    placeholder: "Select end time",
+    componentType: "input",
+    type: "time",
+  },
+];
+
+export const TeacherAttendanceFormControls = [
+  {
+    id: "teacher",
+    label: "Teacher",
+    placeholder: "Select teacher",
+    componentType: "search-select", // Assuming dynamic list
+    dynamic: true,
+  },
+  {
+    id: "status",
+    label: "Status",
+    placeholder: "Select status",
+    componentType: "select",
+    options: [
+      { label: "Present", value: "Present" },
+      { label: "Absent", value: "Absent" },
+      { label: "Day Off", value: "Day off" },
+      { label: "Late", value: "Late" },
+      { label: "Excused", value: "Excused" },
+    ],
+  },
+  {
+    id: "timeIn",
+    label: "Time In",
+    placeholder: "Enter time in",
+    componentType: "input",
+    type: "time",
+  },
+  {
+    id: "timeOut",
+    label: "Time Out",
+    placeholder: "Enter time out",
+    componentType: "input",
+    type: "time",
+  },
+  {
+    id: "reason",
+    label: "Reason",
+    placeholder: "Optional reason",
+    componentType: "textarea",
+  },
+];
+export const ExamFormControls = [
+  {
+    id: "title",
+    label: "Title",
+    componentType: "input",
+    placeholder: "Enter exam title",
+  },
+  {
+    id: "classId",
+    label: "Class",
+    componentType: "search-select",
+    placeholder: "Choose class",
+    dynamic: true,
+  },
+  {
+    id: "halls",
+    label: "Halls Allocation",
+    componentType: "multi-object",
+
+    subFields: [
+      {
+        id: "hallId",
+        label: "Select Hall",
+        componentType: "search-select",
+        placeholder: "Choose hall",
+        dynamic: true,
+      },
+      {
+        id: "count",
+        label: "Students Count",
+        componentType: "input",
+        type: "number",
+        placeholder: "Enter student count",
+      },
+    ],
+  },
+  {
+    id: "exams",
+    label: "Exam Schedule",
+    componentType: "multi-object",
+    subFields: [
+      {
+        id: "subjectId",
+        label: "Subject",
+        componentType: "search-select",
+        dynamic: true,
+        placeholder: "Choose subject",
+        options: [], // Will be populated dynamically
+      },
+      {
+        id: "date",
+        label: "Date",
+        componentType: "input",
+        type: "date",
+      },
+      {
+        id: "day",
+        label: "Day",
+        placeholder: "Days",
+        componentType: "search-select",
+        options: [
+          { label: "Monday", value: "Monday" },
+          { label: "Tuesday", value: "Tuesday" },
+          { label: "Wednesday", value: "Wednesday" },
+          { label: "Thursday", value: "Thursday" },
+          { label: "Friday", value: "Friday" },
+          { label: "Saturday", value: "Saturday" },
+          { label: "Sunday", value: "Sunday" },
+        ],
+      },
+      {
+        id: "startTime",
+        label: "Start Time",
+        componentType: "input",
+        type: "time",
+      },
+      {
+        id: "endTime",
+        label: "End Time",
+        componentType: "input",
+        type: "time",
+      },
+    ],
+  },
+];
+export const StudentAttendanceFormControls = [
+  {
+    id: "classId",
+    label: "Class",
+    componentType: "search-select",
+    placeholder: "Select class",
+    dynamic: true,
+  },
+  {
+    id: "subject",
+    label: "Subject",
+    componentType: "search-select",
+    placeholder: "Select subject",
+    dynamic: true,
+  },
+  {
+    id: "date",
+    label: "Date",
+    componentType: "input",
+    type: "date",
+    placeholder: "Select date",
+  },
+  {
+    id: "periodStart",
+    label: "Period Start",
+    componentType: "input",
+    type: "time",
+    placeholder: "Start time",
+  },
+  {
+    id: "periodEnd",
+    label: "Period End",
+    componentType: "input",
+    type: "time",
+    placeholder: "End time",
+  },
+  {
+    id: "attendanceList",
+    label: "Mark Attendance",
+    componentType: "multi-object",
+    subFields: [
+      {
+        id: "studentId",
+        label: "Student",
+        componentType: "search-select",
+        placeholder: "Select student",
+        dynamic: true,
+      },
+      {
+        id: "status",
+        label: "Status",
+        componentType: "select",
+        placeholder: "Select status",
+        options: [
+          { label: "Present", value: "Present" },
+          { label: "Absent", value: "Absent" },
+          { label: "Late", value: "Late" },
+          { label: "Excused", value: "Excused" },
+        ],
+      },
+    ],
+  },
+];
+export const ResultFormControls = [
+  {
+    id: "classId",
+    label: "Class",
+    componentType: "search-select",
+    placeholder: "Select class",
+    dynamic: true,
+  },
+  {
+    id: "subjectId",
+    label: "Subject",
+    componentType: "search-select",
+    placeholder: "Select subject",
+    dynamic: true,
+  },
+  {
+    id: "academicYear",
+    label: "Academic Year",
+    componentType: "input", // or use "select" if you want predefined options
+    type: "text",
+    placeholder: "e.g. 2024/2025",
+  },
+  {
+    id: "results",
+    label: "Student Results",
+    componentType: "multi-object",
+    subFields: [
+      {
+        id: "studentId",
+        label: "Student",
+        componentType: "search-select",
+        placeholder: "Select student",
+        dynamic: true,
+      },
+      {
+        id: "firstExam",
+        label: "First Exam",
+        componentType: "input",
+        type: "number",
+        placeholder: "First exam score",
+      },
+      {
+        id: "midExam",
+        label: "Mid Exam",
+        componentType: "input",
+        type: "number",
+        placeholder: "Mid exam score",
+      },
+      {
+        id: "thirdExam",
+        label: "Third Exam",
+        componentType: "input",
+        type: "number",
+        placeholder: "Third exam score",
+      },
+      {
+        id: "finalExam",
+        label: "Final Exam",
+        componentType: "input",
+        type: "number",
+        placeholder: "Final exam score",
+      },
+      {
+        id: "activities",
+        label: "Activities",
+        componentType: "input",
+        type: "number",
+        placeholder: "Activity score",
+      },
+    ],
+  },
+];
+export const ResultUpdateFormControls = [
+  {
+    id: "firstExam",
+    label: "First Exam",
+    componentType: "input",
+    type: "number",
+    placeholder: "First exam score",
+  },
+  {
+    id: "midExam",
+    label: "Mid Exam",
+    componentType: "input",
+    type: "number",
+    placeholder: "Mid exam score",
+  },
+  {
+    id: "thirdExam",
+    label: "Third Exam",
+    componentType: "input",
+    type: "number",
+    placeholder: "Third exam score",
+  },
+  {
+    id: "finalExam",
+    label: "Final Exam",
+    componentType: "input",
+    type: "number",
+    placeholder: "Final exam score",
+  },
+  {
+    id: "activities",
+    label: "Activities",
+    componentType: "input",
+    type: "number",
+    placeholder: "Activity score",
+  },
+];
