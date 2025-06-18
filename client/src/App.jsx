@@ -6,7 +6,7 @@ import MainPage from "./pages/mainPage";
 import Authpage from "./pages/auth";
 import Login from "./components/auth/Login";
 import Notfound from "./pages/notfound";
-import StudentDash from "./components/student/StudentDash";
+import StudentDash from "./components/student/pages/StudentDash";
 import TeacherDash from "./components/teacher/teacher";
 import ParantsDash from "./components/parant/ParantsDash";
 import AdminDash from "./components/Admin/pages/AdminDash";
@@ -44,6 +44,13 @@ import Gradebook from "./components/teacher/pages/Gradebook";
 import UpdateGrade from "./components/teacher/pages/UpdateGrade";
 import TrackMarks from "./components/Admin/pages/TrackMarks";
 import MarkHIstroyTrack from "./components/Admin/pages/MarkHIstroyTrack";
+import SeeStudents from "./components/Admin/pages/SeeStudents";
+import Assegment from "./components/teacher/pages/Assegment";
+import StudentCelender from "./components/student/pages/StudentCelender";
+import StudentAssegment from "./components/student/pages/StudentAssegment";
+import StudentGrade from "./components/student/pages/studentGrade";
+import StudentAttendencePage from "./components/student/pages/StudentAttendence";
+import StudentMassages from "./components/student/pages/StudentMassages";
 
 const App = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -121,6 +128,7 @@ const App = () => {
         <Route path="Histroyattendence" element={<AttendenceHistroy />} />
         <Route path="MarkHistroy" element={<MarkHIstroyTrack />} />
         <Route path="Track" element={<TrackMarks />} />
+        <Route path="SeeStudents" element={<SeeStudents />} />
         <Route
           path="TeacherAttendenceHist"
           element={<TeacherAttendanceHistory />}
@@ -128,6 +136,16 @@ const App = () => {
         <Route path="ExamTbale" element={<CreateExamTbale />} />
         <Route path="mangingEvents" element={<ManageEvents />} />
       </Route>
+      <Route path="/student/dashboard" element={<StudentDash />}>
+        <Route index element={<StudentDash />} />
+        <Route path="Studentcelender" element={<StudentCelender />} />
+        <Route path="Studentmassages" element={<StudentMassages />} />
+        <Route path="TudentattendancePage" element={<StudentAttendencePage />} />
+        {/* <Route path="ClassEvents" element={<ClassEvents />} /> */}
+        <Route path="StudentGradebook" element={<StudentGrade />} />
+        {/* <Route path="UpdateGradebook" element={<UpdateGrade />} /> */}
+        <Route path="StudentAssegment" element={<StudentAssegment />} />
+        </Route>
       <Route path="teacher/dashboard" element={<TeacherDash />}>
         <Route index element={<Teacherhome />} />
         <Route path="massages" element={<Massages />} />
@@ -136,6 +154,7 @@ const App = () => {
         <Route path="ClassEvents" element={<ClassEvents />} />
         <Route path="Gradebook" element={<Gradebook />} />
         <Route path="UpdateGradebook" element={<UpdateGrade />} />
+        <Route path="Assegment" element={<Assegment />} />
       </Route>
       <Route path="/parent/dashboard" element={<ParantsDash />} />
     </Routes>

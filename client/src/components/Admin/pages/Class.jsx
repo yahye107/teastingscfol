@@ -45,6 +45,7 @@ import {
   callGetAllTeachersApi,
 } from "@/service/service";
 import GlobalLoader from "@/components/common/GlobalLoader";
+import { Link } from "react-router-dom";
 
 const classSchema = z.object({
   grade: z.string().min(1, "Grade is required"),
@@ -200,6 +201,9 @@ const Class = () => {
             Manage classroom information and student allocations
           </p>
         </div>
+        <Link to="/admin/dashboard/SeeStudents">
+        <Button>See All the students</Button>
+        </Link>
         <Button onClick={handleNewClass} size="lg" className="gap-2">
           <PlusCircle className="h-5 w-5" />
           New Class

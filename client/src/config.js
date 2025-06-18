@@ -798,3 +798,39 @@ export const ResultUpdateFormControls = [
     placeholder: "Activity score",
   },
 ];
+export const TeacherAssignmentFormControls = [
+  {
+    id: "title",
+    label: "Title",
+    placeholder: "Enter assignment title",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "description",
+    label: "Description",
+    placeholder: "Enter assignment details",
+    componentType: "textarea",
+  },
+  {
+    id: "link",
+    label: "Resource Link",
+    placeholder: "Paste Google Docs or resource link",
+    componentType: "input",
+    type: "url",
+  },
+  {
+    id: "classroomId",
+    label: "Class",
+    placeholder: "Search and select class",
+    componentType: "search-select",
+    dynamic: true,
+  },
+  {
+    id: "subjectId",
+    label: "Subject",
+    placeholder: "Select subject",
+    componentType: "search-select",
+    dynamic: true,
+  },
+];

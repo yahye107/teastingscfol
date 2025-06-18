@@ -149,17 +149,20 @@ const {
   markAssignmentViewed,
   markAssignmentCompleted,
   getAssignmentStatus,
+  getStudentAssignments,
+  getTeacherAssignments,
 } = require("../controller/assignmentController");
 
 // Teacher creates an assignment
-router.post("/assignment/create", createAssignment);
-
+router.post("/assignments/create/:userId", createAssignment);
+router.get("/assignments/all", getStudentAssignments);
+router.get("/assignments/teacher/:userId", getTeacherAssignments);
 // Student updates their status
-router.post("/assignment/viewed", markAssignmentViewed);
-router.post("/assignment/completed", markAssignmentCompleted);
+router.post("/assignments/viewed", markAssignmentViewed);
+router.post("/assignments/completed", markAssignmentCompleted);
 
 // Teacher checks status of all students for an assignment
-router.get("/assignment/status/:assignmentId", getAssignmentStatus);
+router.get("/assignments/status/:assignmentId", getAssignmentStatus);
 
 // ================== Classroom ==================
 const {
@@ -174,7 +177,7 @@ const {
 
 // Create classroom
 router.post("/classroom/create", createClassroom);
-router.get("/getallclassroom", getAllClassrooms);
+router.get("/getallclassroom", authVerification, getAllClassrooms);
 router.put("/classroom/:classroomId", updateClassroom);
 // Get classrooms by grade
 router.get("/classroom/grade/:grade", getClassroomsByGrade);

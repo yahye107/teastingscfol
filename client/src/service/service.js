@@ -919,3 +919,84 @@ export const callGetClassOverviewApi = async (classId, academicYear) => {
   );
   return response.data;
 };
+////////////////
+// export const callCreateAssignmentApi = async (userId, data) => {
+//   try {
+//     const response = await axios.post("http://localhost:5000/api/class/assignment/create", data);
+//     return response.data;
+//   } catch (error) {
+//     console.error("Assignment creation failed:", error.message);
+//     throw new Error("Failed to create assignment.");
+//   }
+// };
+export const callCreateAssignmentApi = async (userId, data) => {
+  return axios.post(
+    `http://localhost:5000/api/class/assignments/create/${userId}`,
+    data,
+    {
+      withCredentials: true,
+    }
+  );
+};
+// ✅ 4. Get all assignments for logged-in student
+export const callGetStudentAssignments = async () => {
+  try {
+    const response = await axios.get("http://localhost:5000/api/class/assignments/student");
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch student assignments:", error.message);
+    throw new Error("Assignment fetch error");
+  }
+};
+
+// ✅ 5. Get all student statuses for a specific assignment
+export const callGetAssignmentStatus = async (assignmentId) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/class/assignments/status/${assignmentId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch assignment status:", error.message);
+    throw new Error("Status fetch error");
+  }
+};
+
+// ✅ 6. Mark an assignment as viewed
+export const callMarkAssignmentViewed = async (studentId, assignmentId) => {
+  try {
+    const response = await axios.put("http://localhost:5000/api/class/assignments/view", {
+      studentId,
+      assignmentId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error marking viewed:", error.message);
+    throw new Error("View marking error");
+  }
+};
+
+// ✅ 7. Mark an assignment as completed
+export const callMarkAssignmentCompleted = async (
+  studentId,
+  assignmentId,
+  submission = "Submitted"
+) => {
+  try {
+    const response = await axios.put("http://localhost:5000/api/class/assignments/complete", {
+      studentId,
+      assignmentId,
+      submission,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error marking completed:", error.message);
+    throw new Error("Completion error");
+  }
+};
+export const callGetTeacherAssignmentsApi = async (userId) => {
+  return axios.get(
+    `http://localhost:5000/api/class/assignments/teacher/${userId}`,
+    {
+      withCredentials: true,
+    }
+  );
+};

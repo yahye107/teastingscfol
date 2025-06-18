@@ -29,7 +29,13 @@ export const UserProvider = ({ children }) => {
           const userRole = data.user.role.toLowerCase();
           const allowedPath = roleRoutes[userRole] || "/auth";
 
-          setUser(data.user);
+        const fullUser = {
+    ...data.user,
+    studentProfile: data.student || null,
+    // teacherProfile: data.teacher || null,
+  };
+
+  setUser(fullUser);
 
           // Handle route restrictions
           if (publicRoutes.includes(location.pathname)) {

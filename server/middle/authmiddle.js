@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const Student = require("../models/student"); 
 const Teacher = require("../models/teacher");
 require("dotenv").config();
 
@@ -43,8 +44,8 @@ const authVerification = async (req, res, next) => {
 
     if (userInfo.role === "student") {
       studentInfo = await Student.findOne({ user: userInfo._id })
-        .populate("classroom")
-        .populate("parent");
+        .populate("classId", "_id name section timetables")
+        // .populate("parent");
     }
 
     req.userInfo = userInfo;
@@ -57,6 +58,7 @@ const authVerification = async (req, res, next) => {
 
     next();
   } catch (error) {
+      console.error("Auth Verification Error:", error); // Log actual error
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

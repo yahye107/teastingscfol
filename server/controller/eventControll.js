@@ -121,7 +121,7 @@ const getEventsForUser = async (req, res) => {
       .sort({ createdAt: -1 })
       .select("title message date startTime endTime createdAt audience")
       .populate("classId", "name section")
-      .populate("createdBy", "name");
+     .populate("createdBy", "fullName username")
 
     // Determine status for each event
     const now = new Date();
@@ -152,7 +152,7 @@ const getEventsForUser = async (req, res) => {
       };
     });
 
-    res.status(200).json(events);
+    res.status(200).json({events, message: "Events fetched successfully."});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -212,9 +212,9 @@ const getAnnouncementsForUser = async (req, res) => {
     const announcements = await Event.find(query)
       .sort({ createdAt: -1 })
       .select("title message createdAt audience date")
-      .populate("createdBy", "name date");
+      .populate("createdBy", "fullName username")
 
-    res.status(200).json(announcements);
+    res.status(200).json({message: "announcements found.",announcements});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

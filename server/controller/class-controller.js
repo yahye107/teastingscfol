@@ -91,11 +91,21 @@ const getStudentsByClassroom = async (req, res) => {
     const { classroomId } = req.params;
 
     const classroom = await Classroom.findById(classroomId).populate({
-      path: "students",
-      populate: {
-        path: "user",
-        select: "fullName username email", // Add whatever fields you need
-      },
+       path: "students",
+      populate: [
+        {
+          path: "user",
+          select: "fullName email",
+        },
+        {
+          path: "parent",
+          populate: { // Add this nested population
+            path: "user",
+            select: "fullName email",
+
+          }
+        }
+      ]
     });
     if (!classroom)
       return res.status(404).json({ message: "Classroom not found." });
@@ -125,6 +135,8 @@ const getClassroomByGradeAndSection = async (req, res) => {
 // ✅ Get all classrooms with full populated details
 const getAllClassrooms = async (req, res) => {
   try {
+    const userRole = req.userInfo?.role; // coming from authVerification
+
     const classrooms = await Classroom.find()
       .populate("classTeacher", "username")
       .populate({
@@ -137,25 +149,75 @@ const getAllClassrooms = async (req, res) => {
       .populate("hall", "hallNumber")
       .populate("timetables")
       .populate("result");
-    res
-      .status(200)
-      .json({ message: "All parents fetched successfully", classrooms });
+
+    let filteredClassrooms = classrooms;
+
+    // ✅ If the logged-in user is a teacher, only show grades 1–12
+    if (userRole === "teacher") {
+      filteredClassrooms = classrooms.filter((classroom) => {
+        const gradeStr = classroom.grade
+          .toString()
+          .toLowerCase()
+          .replace(/(th|st|nd|rd)/g, "");
+        const gradeNum = parseInt(gradeStr);
+        return !isNaN(gradeNum) && gradeNum >= 1 && gradeNum <= 12;
+      });
+    }
+
+    res.status(200).json({
+      message:
+        userRole === "teacher"
+          ? "Classrooms for Grades 1–12"
+          : "All classrooms fetched",
+      classrooms: filteredClassrooms,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 // ✅ Update classroom details (grade, section, academicYear, hall, classTeacher, students)
 const updateClassroom = async (req, res) => {
   try {
     const { classroomId } = req.params;
-    const { grade, section, academicYear, hall, classTeacher, studentIds } =
-      req.body;
+    const { grade, section, academicYear, hall, classTeacher, studentIds } = req.body;
+
     const classroom = await Classroom.findById(classroomId);
     if (!classroom) {
       return res.status(404).json({ message: "Classroom not found." });
     }
 
-    // Only update fields if they are provided
+    // Check if another classroom already exists with the same details (excluding current one)
+    const existingClassroom = await Classroom.findOne({
+      _id: { $ne: classroomId },
+      grade,
+      section,
+      academicYear,
+      hall,
+      classTeacher,
+    });
+
+    if (existingClassroom) {
+      // Merge students into the existing classroom (avoid duplicates)
+      const updatedStudents = Array.from(new Set([
+        ...existingClassroom.students.map(s => s.toString()),
+        ...(studentIds || []),
+        ...classroom.students.map(s => s.toString())
+      ]));
+
+      existingClassroom.students = updatedStudents;
+      await existingClassroom.save();
+
+      // Delete the current classroom since it duplicates the other
+      await Classroom.findByIdAndDelete(classroomId);
+
+      return res.status(200).json({
+        message: "Merged with existing classroom. Old classroom deleted.",
+        classroom: existingClassroom,
+      });
+    }
+
+    // If no matching classroom, just update this one
     if (grade !== undefined) classroom.grade = grade;
     if (section !== undefined) classroom.section = section;
     if (academicYear !== undefined) classroom.academicYear = academicYear;
@@ -165,13 +227,12 @@ const updateClassroom = async (req, res) => {
 
     await classroom.save();
 
-    res
-      .status(200)
-      .json({ message: "Classroom updated successfully.", classroom });
+    res.status(200).json({ message: "Classroom updated successfully.", classroom });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 const deleteClassroom = async (req, res) => {
   try {
     const { classroomId } = req.params;
