@@ -628,6 +628,13 @@ export const ExamFormControls = [
 ];
 export const StudentAttendanceFormControls = [
   {
+    id: "academicYear",
+    label: "Academic Year",
+    componentType: "search-select",
+    placeholder: "Select academic year", // <-- corrected
+    dynamic: true,
+  },
+  {
     id: "classId",
     label: "Class",
     componentType: "search-select",
@@ -707,7 +714,7 @@ export const ResultFormControls = [
   {
     id: "academicYear",
     label: "Academic Year",
-    componentType: "input", // or use "select" if you want predefined options
+    componentType: "search-select", // or use "select" if you want predefined options
     type: "text",
     placeholder: "e.g. 2024/2025",
   },

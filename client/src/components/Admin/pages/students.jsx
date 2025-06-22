@@ -77,6 +77,7 @@ const RegStudents = () => {
   }, []);
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return; // Prevent multiple submissions
     setIsSubmitting(true);
     try {
       await callregisterStudetsApi(formData);

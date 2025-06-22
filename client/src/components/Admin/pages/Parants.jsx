@@ -42,6 +42,7 @@ const Parants = () => {
   }, []);
 
   const handleSubmit = async (getData) => {
+    if (isSubmitting) return; // Prevent multiple submissions
     setIsSubmitting(true);
     try {
       const response = await callregisterParentssApi(getData);

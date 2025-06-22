@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-const Student = require("../models/student"); 
+const Student = require("../models/student");
 const Teacher = require("../models/teacher");
+const Result = require("../models/result");
 require("dotenv").config();
 
 const authVerification = async (req, res, next) => {
@@ -43,9 +44,24 @@ const authVerification = async (req, res, next) => {
     }
 
     if (userInfo.role === "student") {
-      studentInfo = await Student.findOne({ user: userInfo._id })
-        .populate("classId", "_id name section timetables")
-        // .populate("parent");
+      const student = await Student.findOne({ user: userInfo._id }).populate(
+        "classId",
+        "_id name section timetables"
+      );
+
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      const results = await Result.find({ student: student._id })
+        .populate("subject", "name")
+        .select(
+          "subject attendanceRate firstExam midExam thirdExam finalExam activities total academicYear lastUpdatedBy createdBy updatedAt createdAt"
+        );
+
+      // Convert to plain object and attach results
+      studentInfo = student.toObject();
+      studentInfo.results = results;
     }
 
     req.userInfo = userInfo;
@@ -58,7 +74,7 @@ const authVerification = async (req, res, next) => {
 
     next();
   } catch (error) {
-      console.error("Auth Verification Error:", error); // Log actual error
+    console.error("Auth Verification Error:", error); // Log actual error
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

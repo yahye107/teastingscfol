@@ -90,6 +90,7 @@ const Subjects = () => {
   };
 
   const handleSubmit = async (data) => {
+    if (isSubmitting) return; // Prevent multiple submissions
     setIsSubmitting(true);
     try {
       if (selectedSubject) {

@@ -23,7 +23,8 @@ const submitResultsForClassSubject = async (req, res) => {
       results.map(async (entry) => {
         const attendanceRate = await calculateAttendanceRate(
           entry.studentId,
-          subjectId
+          subjectId,
+          academicYear // ✅ include academic year
         );
 
         const totalScore =
@@ -54,7 +55,10 @@ const submitResultsForClassSubject = async (req, res) => {
 
     await Result.insertMany(resultData);
 
-    res.status(201).json({ message: "Results submitted successfully." });
+    res.status(201).json({
+      message: "Results submitted successfully.",
+      results: resultData,
+    });
   } catch (error) {
     console.error("Error submitting results:", error);
     res.status(500).json({ message: "Server error" });
@@ -73,7 +77,7 @@ const getStudentResults = async (req, res) => {
     const results = await Result.find(query)
       .populate("subject", "name")
       .select(
-        "subject name attendanceRate firstExam midExam thirdExam finalExam activities total"
+        "subject name academicYear attendanceRate firstExam midExam thirdExam finalExam activities total lastUpdatedBy createdBy updatedAt createdAt"
       );
 
     const totalMarks = results.reduce((sum, r) => sum + parseFloat(r.total), 0);
@@ -402,20 +406,34 @@ const getClassResultsOverview = async (req, res) => {
     const { classId } = req.params;
     const { academicYear } = req.query;
 
-    const query = { classId };
-    if (academicYear) {
-      query.academicYear = academicYear;
+    // Validate required parameters
+    if (!classId) {
+      return res.status(400).json({ message: "Class ID is required" });
     }
 
-    const results = await Result.find(query)
+    if (!academicYear) {
+      return res.status(400).json({ message: "Academic year is required" });
+    }
+
+    // Query results for the specific class and academic year
+    const results = await Result.find({
+      classId,
+      academicYear,
+    })
       .populate({
         path: "student",
         select: "user",
-        populate: { path: "user", select: "fullName" },
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
       })
       .populate("subject", "name")
-      .select("subject total");
+      .select(
+        "student subject firstExam midExam thirdExam finalExam activities total"
+      );
 
+    // Organize results by student
     const studentMap = new Map();
 
     results.forEach((result) => {
@@ -427,48 +445,94 @@ const getClassResultsOverview = async (req, res) => {
       if (!studentMap.has(studentId)) {
         studentMap.set(studentId, {
           studentId,
-          fullName: result.student.user?.fullName || "Unknown",
-          subjects: new Map(), // subjectId => highest total for that subject
+          fullName: result.student.user?.fullName || "Unknown Student",
+          subjects: new Map(), // Will store subjectId => highest total
+          details: [], // Store all subject details for the student
         });
       }
 
       const studentData = studentMap.get(studentId);
       const newTotal = parseFloat(result.total) || 0;
 
+      // Keep the highest total per subject
       const currentTotal = studentData.subjects.get(subjectId);
       if (!currentTotal || newTotal > currentTotal) {
-        studentData.subjects.set(subjectId, newTotal); // keep the highest total per subject
+        studentData.subjects.set(subjectId, newTotal);
+
+        // Store detailed subject information
+        studentData.details.push({
+          subjectId,
+          subjectName: result.subject?.name || "Unknown",
+          firstExam: result.firstExam || 0,
+          midExam: result.midExam || 0,
+          thirdExam: result.thirdExam || 0,
+          finalExam: result.finalExam || 0,
+          activities: result.activities || 0,
+          total: newTotal,
+        });
       }
     });
 
+    // Calculate summary for each student
     const students = Array.from(studentMap.values()).map((student) => {
-      const totalMarks = Array.from(student.subjects.values()).reduce(
-        (sum, val) => sum + val,
-        0
-      );
+      const subjectTotals = Array.from(student.subjects.values());
+      const totalMarks = subjectTotals.reduce((sum, val) => sum + val, 0);
       const subjectsCount = student.subjects.size;
+
       return {
         studentId: student.studentId,
         fullName: student.fullName,
         totalMarks: totalMarks.toFixed(1),
         subjectsCount,
         averagePerSubject:
-          subjectsCount > 0 ? (totalMarks / subjectsCount).toFixed(2) : "N/A",
+          subjectsCount > 0 ? (totalMarks / subjectsCount).toFixed(2) : "0.00",
+        subjects: student.details, // Include detailed subject information
       };
     });
 
-    // Sort by total marks descending
-    students.sort((a, b) => b.totalMarks - a.totalMarks);
+    // Sort students by total marks (descending)
+    students.sort(
+      (a, b) => parseFloat(b.totalMarks) - parseFloat(a.totalMarks)
+    );
 
-    res.status(200).json({ students });
+    res.status(200).json({
+      success: true,
+      count: students.length,
+      students,
+    });
   } catch (error) {
     console.error("Error in getClassResultsOverview:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching class results overview",
+      error: error.message,
+    });
+  }
+};
+// Get all unique academic years from the Result collection
+const getRegisteredAcademicYears = async (req, res) => {
+  try {
+    const years = await Result.distinct("academicYear");
+
+    const sortedYears = years.sort((a, b) => {
+      // Sort years like "2024-2025"
+      const aStart = parseInt(a.split("-")[0]);
+      const bStart = parseInt(b.split("-")[0]);
+      return bStart - aStart; // Descending order
+    });
+
+    res
+      .status(200)
+      .json({ message: "All the years", academicYears: sortedYears });
+  } catch (error) {
+    console.error("Error fetching academic years:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 module.exports = {
   getClassResultsOverview,
+  getRegisteredAcademicYears,
   getStudentResults,
   getResultsByClassSubjectYear,
   bulkUpdateResults,

@@ -26,6 +26,10 @@ const attendanceSchema = new mongoose.Schema(
       enum: ["Present", "Absent", "Late", "Excused"],
       required: true,
     },
+    academicYear: {
+      type: String,
+      required: true,
+    },
     classId: { type: mongoose.Schema.Types.ObjectId, ref: "Classroom" },
     periodStart: { type: String, required: true },
     periodEnd: { type: String, required: true },

@@ -81,6 +81,7 @@ const TeacherAttendance = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; // Prevent multiple submissions
     if (!validateEntries()) return;
 
     try {

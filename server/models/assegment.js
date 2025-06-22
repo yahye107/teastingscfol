@@ -4,7 +4,7 @@ const assignmentSchema = new mongoose.Schema({
   title: String,
   description: String,
   link: String,
-  teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+  teacher: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   classroom: { type: mongoose.Schema.Types.ObjectId, ref: "Classroom" },
   subject: {
     type: mongoose.Schema.Types.ObjectId,

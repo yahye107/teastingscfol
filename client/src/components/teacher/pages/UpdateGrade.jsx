@@ -5,6 +5,7 @@ import {
   callUpdateResultForStudentApi,
   callGetAttendanceRatesBySubjectApi,
   callBulkUpdateResultsApi,
+  callGetRegisteredAcademicYearsApi,
   callGetAllsubjectssApi,
 } from "@/service/service";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/useContaxt/UseContext";
 import GlobalLoader from "@/components/common/GlobalLoader";
+import SearchableSelect from "@/components/common/SearchableSelect";
 
 const updateSchema = z.object({
   results: z.array(
@@ -42,6 +44,7 @@ const updateSchema = z.object({
 const UpdateGrade = () => {
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
@@ -59,12 +62,16 @@ const UpdateGrade = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [classesRes, subjectsRes] = await Promise.all([
+        const [classesRes, subjectsRes, yearsRes] = await Promise.all([
           callGetAllClassesApi(),
           callGetAllsubjectssApi(),
+          callGetRegisteredAcademicYearsApi(),
         ]);
+
+        console.log("Academic years from API:", yearsRes);
         setClasses(classesRes.classrooms);
         setSubjects(subjectsRes.subjects);
+        setAcademicYears(yearsRes || []);
       } catch (error) {
         toast.error("Failed to load initial data");
       } finally {
@@ -73,7 +80,7 @@ const UpdateGrade = () => {
     };
     fetchInitialData();
   }, []);
-
+  console.log("academicYears", academicYears);
   const loadResults = async () => {
     if (selectedClass && selectedSubject && selectedYear) {
       setResultsLoading(true);
@@ -84,29 +91,33 @@ const UpdateGrade = () => {
             selectedSubject,
             selectedYear
           ),
-          callGetAttendanceRatesBySubjectApi(selectedClass, selectedSubject),
+          callGetAttendanceRatesBySubjectApi(
+            selectedClass,
+            selectedSubject,
+            selectedYear
+          ),
         ]);
 
         const studentResults = resultsRes?.students || [];
         const attendanceData = attendanceRes?.data || [];
 
-        const attendanceMap = new Map(
-          attendanceData.map((item) => [
-            item.studentId?.toString(),
-            item.attendanceRate || "0",
-          ])
-        );
-
-        // Corrected results formatting
-        // In the loadResults function
+        // Correctly match attendance to student AND academic year
         const formattedResults = studentResults.map((student) => {
           const studentId = student.studentId?.toString();
-          const rawAttendance = attendanceMap.get(studentId);
-          const attendanceValue = parseFloat(rawAttendance) || 0;
-          // console.log(studentResults);
+
+          // Find attendance for this specific student and year
+          const attendanceRecord = attendanceData.find(
+            (item) =>
+              item.studentId?.toString() === studentId &&
+              item.academicYear === selectedYear
+          );
+
+          const attendanceValue = attendanceRecord
+            ? parseFloat(attendanceRecord.attendanceRate) || 0
+            : 0;
 
           return {
-            _id: student._id?.toString(), // ✅ Correct result ID
+            _id: student._id?.toString(),
             studentId,
             fullName: student.fullName || "Unknown Student",
             firstExam: Number(student.firstExam) || 0,
@@ -223,44 +234,28 @@ const UpdateGrade = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* Class Selector */}
-        <Select onValueChange={setSelectedClass}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Class" />
-          </SelectTrigger>
-          <SelectContent>
-            {classes.map((cls) => (
-              <SelectItem key={cls._id} value={cls._id}>
-                {cls.grade} - {cls.section}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={classes}
+          value={selectedClass}
+          onChange={setSelectedClass}
+          placeholder="Select Class"
+        />
 
-        {/* Subject Selector */}
-        <Select onValueChange={setSelectedSubject}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Subject" />
-          </SelectTrigger>
-          <SelectContent>
-            {subjects.map((subject) => (
-              <SelectItem key={subject._id} value={subject._id}>
-                {subject.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={subjects}
+          value={selectedSubject}
+          onChange={setSelectedSubject}
+          placeholder="Select Subject"
+          isDisabled={!selectedClass}
+        />
 
         {/* Year Selector */}
-        <Select onValueChange={setSelectedYear}>
-          <SelectTrigger>
-            <SelectValue placeholder="Academic Year" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2024-2025">2024/2025</SelectItem>
-            <SelectItem value="2025-2026">2025/2026</SelectItem>
-            <SelectItem value="2023/2024">2023/2024</SelectItem>
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={academicYears.map((year) => ({ label: year, value: year }))}
+          value={selectedYear}
+          onChange={setSelectedYear}
+          placeholder="Academic Year"
+        />
       </div>
       {fields.length > 0 && (
         <div className="mb-4">

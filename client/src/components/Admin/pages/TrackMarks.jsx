@@ -3,11 +3,12 @@ import {
   callGetAllClassesApi,
   callGetResultsByClassSubjectYearApi,
   callGetStudentResultsApi,
-  callGetClassOverviewApi, // Import the new API call
+  callGetClassOverviewApi,
   callUpdateResultForStudentApi,
   callGetAttendanceRatesBySubjectApi,
   callBulkUpdateResultsApi,
   callGetAllsubjectssApi,
+  callGetRegisteredAcademicYearsApi,
 } from "@/service/service";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +33,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import SearchableSelect from "@/components/common/SearchableSelect";
 
 const updateSchema = z.object({
   results: z.array(
@@ -51,6 +53,7 @@ const updateSchema = z.object({
 const TrackMarks = () => {
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
@@ -70,7 +73,7 @@ const TrackMarks = () => {
   const [overallSubjectCount, setOverallSubjectCount] = useState(0);
 
   // New states for Class Overview
-  const [viewMode, setViewMode] = useState("subject"); // 'subject' or 'classOverview'
+  const [viewMode, setViewMode] = useState("subject");
   const [classOverviewData, setClassOverviewData] = useState([]);
   const [classOverviewLoading, setClassOverviewLoading] = useState(false);
 
@@ -87,7 +90,6 @@ const TrackMarks = () => {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     if (link.download !== undefined) {
-      // feature detection
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", filename);
@@ -120,7 +122,7 @@ const TrackMarks = () => {
         "Total",
       ];
       dataRows = filteredFields.map((field) => [
-        `"${field.fullName}"`, // Enclose name in quotes to handle commas
+        `"${field.fullName}"`,
         field.attendanceRate.toFixed(1),
         field.firstExam.toFixed(1),
         field.midExam.toFixed(1),
@@ -148,10 +150,10 @@ const TrackMarks = () => {
         "Average Per Subject",
       ];
       dataRows = filteredClassOverviewData.map((student) => [
-        `"${student.fullName}"`, // Enclose name in quotes
+        `"${student.fullName}"`,
         student.totalMarks,
         student.subjectsCount,
-        (parseFloat(student.totalMarks) / student.subjectsCount).toFixed(2), // Recalculate average here
+        (parseFloat(student.totalMarks) / student.subjectsCount).toFixed(2),
       ]);
     } else {
       toast.error("Please select a view mode to export data.");
@@ -162,16 +164,18 @@ const TrackMarks = () => {
     toast.success("Data exported successfully!");
   };
 
-  // Fetch initial data (classes and subjects)
+  // Fetch initial data (classes, subjects, and academic years)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [classesRes, subjectsRes] = await Promise.all([
+        const [classesRes, subjectsRes, yearsRes] = await Promise.all([
           callGetAllClassesApi(),
           callGetAllsubjectssApi(),
+          callGetRegisteredAcademicYearsApi(),
         ]);
         setClasses(classesRes.classrooms);
         setSubjects(subjectsRes.subjects);
+        setAcademicYears(yearsRes || []);
       } catch (error) {
         toast.error("Failed to load initial data");
       } finally {
@@ -192,12 +196,17 @@ const TrackMarks = () => {
             selectedSubject,
             selectedYear
           ),
-          callGetAttendanceRatesBySubjectApi(selectedClass, selectedSubject),
+          callGetAttendanceRatesBySubjectApi(
+            selectedClass,
+            selectedSubject,
+            selectedYear
+          ),
         ]);
 
         const studentResults = resultsRes?.students || [];
         const attendanceData = attendanceRes?.data || [];
 
+        // Create a map of attendance by student ID
         const attendanceMap = new Map(
           attendanceData.map((item) => [
             item.studentId?.toString(),
@@ -230,7 +239,7 @@ const TrackMarks = () => {
         setResultsLoading(false);
       }
     } else {
-      setValue("results", []); // Clear results if criteria are not met
+      setValue("results", []);
     }
   };
 
@@ -241,10 +250,8 @@ const TrackMarks = () => {
       try {
         const response = await callGetClassOverviewApi(
           selectedClass,
-          selectedYear
+          selectedYear // Now correctly passing the selected academic year
         );
-        // Log the raw backend response for debugging
-        console.log("Class Overview API Raw Response:", response);
         setClassOverviewData(response.students || []);
       } catch (error) {
         toast.error(`Failed to load class overview: ${error.message}`);
@@ -253,7 +260,7 @@ const TrackMarks = () => {
         setClassOverviewLoading(false);
       }
     } else {
-      setClassOverviewData([]); // Clear data if criteria are not met
+      setClassOverviewData([]);
     }
   };
 
@@ -284,7 +291,7 @@ const TrackMarks = () => {
         updatedBy: user._id,
       });
       toast.success("Student record updated");
-      await loadSubjectResults(); // Reload subject results after update
+      await loadSubjectResults();
     } catch (error) {
       toast.error(
         `Update failed: ${error.response?.data?.message || error.message}`
@@ -340,7 +347,7 @@ const TrackMarks = () => {
 
       await callBulkUpdateResultsApi(payload);
       toast.success("Bulk update successful");
-      await loadSubjectResults(); // Reload subject results after update
+      await loadSubjectResults();
     } catch (error) {
       toast.error(`Bulk update failed: ${error.message}`);
     }
@@ -377,8 +384,6 @@ const TrackMarks = () => {
             selectedStudentId,
             selectedYear
           );
-          console.log(response.data);
-
           const studentResults = response?.data?.results || [];
 
           // Group results by subject and aggregate scores
@@ -395,7 +400,6 @@ const TrackMarks = () => {
               };
             }
 
-            // Sum scores for each component
             acc[subjectName].firstExam += Number(result.firstExam || 0);
             acc[subjectName].midExam += Number(result.midExam || 0);
             acc[subjectName].thirdExam += Number(result.thirdExam || 0);
@@ -415,7 +419,7 @@ const TrackMarks = () => {
                 scores.thirdExam +
                 scores.finalExam +
                 scores.activities;
-              const average = total / 5; // Average of 5 components
+              const average = total / 5;
 
               return {
                 subjectName,
@@ -467,46 +471,28 @@ const TrackMarks = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* Class Selector */}
-        <Select onValueChange={setSelectedClass} value={selectedClass}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select Class" />
-          </SelectTrigger>
-          <SelectContent>
-            {classes.map((cls) => (
-              <SelectItem key={cls._id} value={cls._id}>
-                {cls.grade} - {cls.section}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={classes}
+          value={selectedClass}
+          onChange={setSelectedClass}
+          placeholder="Select Class"
+        />
 
-        {/* Subject Selector (only visible in 'subject' view mode) */}
-        {viewMode === "subject" && (
-          <Select onValueChange={setSelectedSubject} value={selectedSubject}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects.map((subject) => (
-                <SelectItem key={subject._id} value={subject._id}>
-                  {subject.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <SearchableSelect
+          options={subjects}
+          value={selectedSubject}
+          onChange={setSelectedSubject}
+          placeholder="Select Subject"
+          isDisabled={!selectedClass}
+        />
 
         {/* Year Selector */}
-        <Select onValueChange={setSelectedYear} value={selectedYear}>
-          <SelectTrigger>
-            <SelectValue placeholder="Academic Year" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2024-2025">2024/2025</SelectItem>
-            <SelectItem value="2025-2026">2025/2026</SelectItem>
-            <SelectItem value="2023-2024">2023/2024</SelectItem>
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={academicYears.map((year) => ({ label: year, value: year }))}
+          value={selectedYear}
+          onChange={setSelectedYear}
+          placeholder="Academic Year"
+        />
       </div>
 
       <div className="flex justify-start gap-4 mb-4">
@@ -524,7 +510,7 @@ const TrackMarks = () => {
               );
               return;
             }
-            setSelectedSubject(""); // Clear subject when switching to class overview
+            setSelectedSubject("");
             setViewMode("classOverview");
           }}
           variant={viewMode === "classOverview" ? "default" : "outline"}
@@ -733,12 +719,10 @@ const TrackMarks = () => {
                       </button>
                     </td>
                     <td className="p-3 text-center font-semibold">
-                      {/* Explicitly parse and format totalMarks from backend */}
                       {parseFloat(student.totalMarks).toFixed(1)}
                     </td>
                     <td className="p-3 text-center">{student.subjectsCount}</td>
                     <td className="p-3 text-center font-semibold">
-                      {/* Calculate average as totalMarks / subjectsCount */}
                       {student.subjectsCount > 0
                         ? (
                             parseFloat(student.totalMarks) /

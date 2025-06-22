@@ -64,8 +64,8 @@ const TeacherCalendar = () => {
           callGetEventsForUserApi(),
           callGetAnnouncementsForUserApi(),
         ]);
-        setUserEvents(events);
-        setUserAnnouncements(announcements);
+        setUserEvents(events.events);
+        setUserAnnouncements(announcements.announcements);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

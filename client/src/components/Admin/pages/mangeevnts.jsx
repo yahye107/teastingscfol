@@ -26,6 +26,7 @@ const ManageEvents = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
   const fetchItems = async () => {
+    if (loading) return; // Prevent multiple fetches
     setLoading(true);
     try {
       const data = await callGetAllEventsAndAnnouncementsApi();

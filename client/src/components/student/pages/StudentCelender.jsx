@@ -1,39 +1,39 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import { 
-  format, 
-  parse, 
-  startOfWeek, 
-  getDay, 
-  addDays, 
-  setHours, 
-  setMinutes, 
-  isValid 
+import {
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  addDays,
+  setHours,
+  setMinutes,
+  isValid,
 } from "date-fns";
 import enUS from "date-fns/locale/en-US";
-import { 
-  FiCalendar, 
-  FiClock, 
-  FiInfo, 
-  FiMapPin, 
-  FiUser, 
-  FiBook, 
-  FiBell 
+import {
+  FiCalendar,
+  FiClock,
+  FiInfo,
+  FiMapPin,
+  FiUser,
+  FiBook,
+  FiBell,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { 
-  callGetEventsForUserApi, 
-  callGetAnnouncementsForUserApi, 
-  callGetStudentWeeklyTimetableApi 
+import {
+  callGetEventsForUserApi,
+  callGetAnnouncementsForUserApi,
+  callGetStudentWeeklyTimetableApi,
 } from "@/service/service";
 import GlobalLoader from "@/components/common/GlobalLoader";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useUser } from "@/useContaxt/UseContext";
 
@@ -73,8 +73,8 @@ const StudentCalendar = () => {
           callGetEventsForUserApi(),
           callGetAnnouncementsForUserApi(),
         ]);
-        setUserEvents(events);
-        setUserAnnouncements(announcements);
+        setUserEvents(events.events);
+        setUserAnnouncements(announcements.announcements);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -117,7 +117,9 @@ const StudentCalendar = () => {
             ?.map(Number) || [0, 0];
 
           return {
-            title: `${entry.subjectName || "No Subject"} - ${entry.teacherName || "No Teacher"}`,
+            title: `${entry.subjectName || "No Subject"} - ${
+              entry.teacherName || "No Teacher"
+            }`,
             start: setHours(setMinutes(eventDate, startMinutes), startHours),
             end: setHours(setMinutes(eventDate, endMinutes), endHours),
             resource: {
@@ -224,7 +226,7 @@ const StudentCalendar = () => {
       justifyContent: "center",
       minHeight: "40px",
       boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-      fontWeight: 500
+      fontWeight: 500,
     };
 
     const typeStyles = {
@@ -236,19 +238,19 @@ const StudentCalendar = () => {
       },
       timetable: {
         background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
-      }
+      },
     };
 
     return {
       style: {
         ...baseStyle,
-        ...typeStyles[event.resource.type]
-      }
+        ...typeStyles[event.resource.type],
+      },
     };
   };
 
   const EventItem = ({ event }) => (
-    <motion.div 
+    <motion.div
       className="event-item w-full h-full p-1"
       whileHover={{ scale: 1.02 }}
       initial={{ opacity: 0 }}
@@ -306,11 +308,11 @@ const StudentCalendar = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <h2 className="text-xl font-bold dark:text-white text-center md:text-left">
                       {props.label}
                     </h2>
-                    
+
                     <div className="flex items-center gap-3">
                       <select
                         className="px-3 py-2 border rounded-lg dark:bg-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -323,19 +325,25 @@ const StudentCalendar = () => {
                           </option>
                         ))}
                       </select>
-                      
+
                       <div className="hidden sm:flex items-center gap-3">
                         <div className="flex items-center">
                           <span className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
-                          <span className="text-xs text-gray-600 dark:text-gray-300">Class</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">
+                            Class
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                          <span className="text-xs text-gray-600 dark:text-gray-300">Personal</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">
+                            Personal
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <span className="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
-                          <span className="text-xs text-gray-600 dark:text-gray-300">Announcement</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">
+                            Announcement
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -350,21 +358,32 @@ const StudentCalendar = () => {
       </div>
 
       {/* Event Details Modal */}
-      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+      <Dialog
+        open={!!selectedEvent}
+        onOpenChange={() => setSelectedEvent(null)}
+      >
         <DialogContent className="rounded-lg max-w-md sm:max-w-lg p-0 overflow-hidden border-0">
-          <div 
+          <div
             className={`h-2 w-full ${
-              selectedEvent?.resource?.type === "personal" ? "bg-blue-500" :
-              selectedEvent?.resource?.type === "announcement" ? "bg-emerald-500" : "bg-indigo-500"
+              selectedEvent?.resource?.type === "personal"
+                ? "bg-blue-500"
+                : selectedEvent?.resource?.type === "announcement"
+                ? "bg-emerald-500"
+                : "bg-indigo-500"
             }`}
           ></div>
-          
+
           <DialogHeader className="px-6 pt-5 pb-3">
             <DialogTitle className="text-xl font-bold flex items-start">
-              <div className={`p-2 rounded-lg mr-3 ${
-                selectedEvent?.resource?.type === "personal" ? "bg-blue-100 text-blue-600" :
-                selectedEvent?.resource?.type === "announcement" ? "bg-emerald-100 text-emerald-600" : "bg-indigo-100 text-indigo-600"
-              }`}>
+              <div
+                className={`p-2 rounded-lg mr-3 ${
+                  selectedEvent?.resource?.type === "personal"
+                    ? "bg-blue-100 text-blue-600"
+                    : selectedEvent?.resource?.type === "announcement"
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-indigo-100 text-indigo-600"
+                }`}
+              >
                 {selectedEvent?.resource?.type === "announcement" ? (
                   <FiBell size={18} />
                 ) : selectedEvent?.resource?.type === "personal" ? (
@@ -381,32 +400,44 @@ const StudentCalendar = () => {
               </div>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="px-6 pb-6 space-y-4">
             {/* Timetable Details */}
             {selectedEvent?.resource?.type === "timetable" && (
               <div className="space-y-3">
-                <DetailItem icon={<FiBook className="text-indigo-500" />} label="Subject">
+                <DetailItem
+                  icon={<FiBook className="text-indigo-500" />}
+                  label="Subject"
+                >
                   {selectedEvent.resource.subject || "N/A"}
                 </DetailItem>
-                
-                <DetailItem icon={<FiUser className="text-indigo-500" />} label="Teacher">
+
+                <DetailItem
+                  icon={<FiUser className="text-indigo-500" />}
+                  label="Teacher"
+                >
                   {selectedEvent.resource.teacher || "N/A"}
                 </DetailItem>
-                
-                <DetailItem icon={<FiMapPin className="text-indigo-500" />} label="Location">
+
+                <DetailItem
+                  icon={<FiMapPin className="text-indigo-500" />}
+                  label="Location"
+                >
                   {selectedEvent.resource.location || "N/A"}
                 </DetailItem>
               </div>
             )}
-            
+
             {/* Announcement Details */}
             {selectedEvent?.resource?.type === "announcement" && (
               <div className="space-y-3">
-                <DetailItem icon={<FiUser className="text-emerald-500" />} label="Author">
+                <DetailItem
+                  icon={<FiUser className="text-emerald-500" />}
+                  label="Author"
+                >
                   {selectedEvent.resource.author || "Administrator"}
                 </DetailItem>
-                
+
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 mt-2">
                   <p className="text-gray-700 dark:text-gray-300">
                     {selectedEvent.resource.message || "No message provided"}
@@ -414,7 +445,7 @@ const StudentCalendar = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Personal Event Details */}
             {selectedEvent?.resource?.type === "personal" && (
               <div className="space-y-3">
@@ -425,11 +456,14 @@ const StudentCalendar = () => {
                     </p>
                   </div>
                 )}
-                
-                <DetailItem icon={<FiBook className="text-blue-500" />} label="Class">
+
+                <DetailItem
+                  icon={<FiBook className="text-blue-500" />}
+                  label="Class"
+                >
                   {selectedEvent.resource.className || "N/A"}
                 </DetailItem>
-                
+
                 {selectedEvent?.resource?.status && (
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 mt-2">
                     <FiInfo className="mr-2 w-4 h-4" />
@@ -438,20 +472,31 @@ const StudentCalendar = () => {
                 )}
               </div>
             )}
-            
+
             {/* Time Information */}
             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100 dark:border-slate-700">
-              <DetailItem icon={<FiCalendar className="text-gray-500" />} label="Date">
-                {selectedEvent?.start && format(selectedEvent.start, "MMM d, yyyy")}
+              <DetailItem
+                icon={<FiCalendar className="text-gray-500" />}
+                label="Date"
+              >
+                {selectedEvent?.start &&
+                  format(selectedEvent.start, "MMM d, yyyy")}
               </DetailItem>
-              
+
               {!selectedEvent?.allDay ? (
-                <DetailItem icon={<FiClock className="text-gray-500" />} label="Time">
-                  {selectedEvent?.start && format(selectedEvent.start, "h:mm a")} -{" "}
-                  {selectedEvent?.end && format(selectedEvent.end, "h:mm a")}
+                <DetailItem
+                  icon={<FiClock className="text-gray-500" />}
+                  label="Time"
+                >
+                  {selectedEvent?.start &&
+                    format(selectedEvent.start, "h:mm a")}{" "}
+                  - {selectedEvent?.end && format(selectedEvent.end, "h:mm a")}
                 </DetailItem>
               ) : (
-                <DetailItem icon={<FiClock className="text-gray-500" />} label="Time">
+                <DetailItem
+                  icon={<FiClock className="text-gray-500" />}
+                  label="Time"
+                >
                   All day
                 </DetailItem>
               )}

@@ -48,6 +48,7 @@ const ClassEvents = () => {
   }, []);
 
   const handleSubmit = async (formData) => {
+    if (loading) return;
     setLoading(true);
     setError("");
     try {

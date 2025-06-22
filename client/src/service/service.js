@@ -718,15 +718,32 @@ export const callGetDailySummaryApi = async (classId, date) => {
 };
 
 // Student APIs
-export const callGetStudentAttendanceApi = async (studentId) => {
+export const callGetStudentAttendanceApi = (
+  studentId,
+  startDate,
+  endDate,
+  academicYear
+) => {
   return axios.get(
     `http://localhost:5000/api/class/attendance/student/${studentId}`,
+    {
+      params: { startDate, endDate, academicYear },
+    }
+  );
+};
+// In service.js
+// In service.js - CORRECTED VERSION
+export const callGetAttendanceByAcademicYearApi = async (
+  studentId,
+  academicYear
+) => {
+  return axios.get(
+    `http://localhost:5000/api/class/attendance/by-academic-year/${studentId}?academicYear=${academicYear}`,
     {
       withCredentials: true,
     }
   );
 };
-
 export const callGetMonthlySummaryApi = async (studentId) => {
   return axios.get(
     `http://localhost:5000/api/class/attendance/monthly/${studentId}`,
@@ -736,28 +753,45 @@ export const callGetMonthlySummaryApi = async (studentId) => {
   );
 };
 
-// Admin APIs
-export const callGetAttendanceRatesForClassApi = async (classId) => {
+// service.js
+export const callGetAttendanceRatesForClassApi = (classId, academicYear) => {
   return axios.get(
     `http://localhost:5000/api/class/attendance/rates/${classId}`,
     {
-      withCredentials: true,
+      params: { academicYear },
     }
   );
 };
 
-export const callGetAttendanceRatesBySubjectApi = async (
+export const callGetAttendanceRatesBySubjectApi = (
   classId,
-  subjectId
+  subjectId,
+  academicYear
 ) => {
   return axios.get(
     `http://localhost:5000/api/class/${classId}/subject/${subjectId}`,
     {
-      withCredentials: true,
+      params: { academicYear },
     }
   );
 };
 
+// ✅ Fetch logged-in student's attendance records
+export const callGetSubjectAttendenceBystudentApi = () => {
+  return axios.get("http://localhost:5000/api/class/student/subjects", {
+    withCredentials: true, // needed if your auth uses cookies
+  });
+};
+export const callGetLoggedInStudentAttendanceApi = () => {
+  return axios.get("http://localhost:5000/api/class/student/myself", {
+    withCredentials: true, // needed if your auth uses cookies
+  });
+};
+export const callGetSummaryStudentAttendanceApi = () => {
+  return axios.get("http://localhost:5000/api/class/student/summary", {
+    withCredentials: true, // needed if your auth uses cookies
+  });
+};
 export const callGetClassAttendanceReportApi = async (
   classId,
   fromDate,
@@ -867,6 +901,23 @@ export const callGetStudentResultsApi = async (studentId, academicYear) => {
     }
   );
 };
+export const callGetRegisteredAcademicYearsApi = async () => {
+  try {
+    const response = await axios.get(
+      "http://localhost:5000/api/class/results/academicyear",
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data.academicYears; // returns an array of years
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message || "Failed to fetch academic years";
+    console.error("Academic year fetch error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 export const callGetResultsByClassSubjectYearApi = async (
   classId,
   subjectId,
@@ -915,7 +966,10 @@ export const callBulkUpdateResultsApi = async (payload) => {
 // service/service.js
 export const callGetClassOverviewApi = async (classId, academicYear) => {
   const response = await axios.get(
-    `http://localhost:5000/api/class/ResultMark/${classId}`
+    `http://localhost:5000/api/class/ResultMark/${classId}`,
+    {
+      params: { academicYear }, // Pass as query parameter
+    }
   );
   return response.data;
 };
@@ -932,7 +986,7 @@ export const callGetClassOverviewApi = async (classId, academicYear) => {
 export const callCreateAssignmentApi = async (userId, data) => {
   return axios.post(
     `http://localhost:5000/api/class/assignments/create/${userId}`,
-    data,
+    data, // Remove teacherId from data
     {
       withCredentials: true,
     }
@@ -941,7 +995,12 @@ export const callCreateAssignmentApi = async (userId, data) => {
 // ✅ 4. Get all assignments for logged-in student
 export const callGetStudentAssignments = async () => {
   try {
-    const response = await axios.get("http://localhost:5000/api/class/assignments/student");
+    const response = await axios.get(
+      "http://localhost:5000/api/class/assignments/student",
+      {
+        withCredentials: true, // 🟢 VERY IMPORTANT: sends the session cookie
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Failed to fetch student assignments:", error.message);
@@ -952,7 +1011,9 @@ export const callGetStudentAssignments = async () => {
 // ✅ 5. Get all student statuses for a specific assignment
 export const callGetAssignmentStatus = async (assignmentId) => {
   try {
-    const response = await axios.get(`http://localhost:5000/api/class/assignments/status/${assignmentId}`);
+    const response = await axios.get(
+      `http://localhost:5000/api/class/assignments/status/${assignmentId}`
+    );
     return response.data;
   } catch (error) {
     console.error("Failed to fetch assignment status:", error.message);
@@ -961,37 +1022,51 @@ export const callGetAssignmentStatus = async (assignmentId) => {
 };
 
 // ✅ 6. Mark an assignment as viewed
-export const callMarkAssignmentViewed = async (studentId, assignmentId) => {
+export const callMarkAssignmentViewed = async ({ studentId, assignmentId }) => {
   try {
-    const response = await axios.put("http://localhost:5000/api/class/assignments/view", {
-      studentId,
-      assignmentId,
-    });
+    const response = await axios.post(
+      "http://localhost:5000/api/class/assignments/viewed",
+      { studentId, assignmentId },
+      { withCredentials: true }
+    );
     return response.data;
   } catch (error) {
     console.error("Error marking viewed:", error.message);
-    throw new Error("View marking error");
+    throw new Error("Viewing error");
   }
 };
 
+// frontend
+export const callGetAssignmentDetails = async (assignmentId, search = "") => {
+  const response = await axios.get(
+    `http://localhost:5000/api/class/assignment/details/${assignmentId}?search=${search}`
+  );
+  return response.data;
+};
+
 // ✅ 7. Mark an assignment as completed
-export const callMarkAssignmentCompleted = async (
+export const callMarkAssignmentCompleted = async ({
   studentId,
   assignmentId,
-  submission = "Submitted"
-) => {
+  submission = "Submitted",
+}) => {
   try {
-    const response = await axios.put("http://localhost:5000/api/class/assignments/complete", {
-      studentId,
-      assignmentId,
-      submission,
-    });
+    const response = await axios.post(
+      "http://localhost:5000/api/class/assignments/completed",
+      {
+        studentId,
+        assignmentId,
+        submission,
+      },
+      { withCredentials: true }
+    );
     return response.data;
   } catch (error) {
     console.error("Error marking completed:", error.message);
     throw new Error("Completion error");
   }
 };
+
 export const callGetTeacherAssignmentsApi = async (userId) => {
   return axios.get(
     `http://localhost:5000/api/class/assignments/teacher/${userId}`,

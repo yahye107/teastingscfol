@@ -33,6 +33,7 @@ const studentSchema = new mongoose.Schema({
   class: { type: mongoose.Schema.Types.ObjectId, ref: "Classroom" },
   parent: { type: mongoose.Schema.Types.ObjectId, ref: "Parent" },
   timetables: [{ type: mongoose.Schema.Types.ObjectId, ref: "Timetable" }],
+  result: [{ type: mongoose.Schema.Types.ObjectId, ref: "StudentResult" }],
   emergencyContact: String,
   previousSchool: String,
   ePortfolio: [{ title: String, link: String }],

@@ -51,6 +51,7 @@ import StudentAssegment from "./components/student/pages/StudentAssegment";
 import StudentGrade from "./components/student/pages/studentGrade";
 import StudentAttendencePage from "./components/student/pages/StudentAttendence";
 import StudentMassages from "./components/student/pages/StudentMassages";
+import AssignmentDetails from "./components/teacher/pages/AssignmentDetails";
 
 const App = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -140,12 +141,15 @@ const App = () => {
         <Route index element={<StudentDash />} />
         <Route path="Studentcelender" element={<StudentCelender />} />
         <Route path="Studentmassages" element={<StudentMassages />} />
-        <Route path="TudentattendancePage" element={<StudentAttendencePage />} />
+        <Route
+          path="TudentattendancePage"
+          element={<StudentAttendencePage />}
+        />
         {/* <Route path="ClassEvents" element={<ClassEvents />} /> */}
         <Route path="StudentGradebook" element={<StudentGrade />} />
         {/* <Route path="UpdateGradebook" element={<UpdateGrade />} /> */}
         <Route path="StudentAssegment" element={<StudentAssegment />} />
-        </Route>
+      </Route>
       <Route path="teacher/dashboard" element={<TeacherDash />}>
         <Route index element={<Teacherhome />} />
         <Route path="massages" element={<Massages />} />
@@ -155,6 +159,10 @@ const App = () => {
         <Route path="Gradebook" element={<Gradebook />} />
         <Route path="UpdateGradebook" element={<UpdateGrade />} />
         <Route path="Assegment" element={<Assegment />} />
+        <Route
+          path="assignment-details/:assignmentId"
+          element={<AssignmentDetails />}
+        />
       </Route>
       <Route path="/parent/dashboard" element={<ParantsDash />} />
     </Routes>

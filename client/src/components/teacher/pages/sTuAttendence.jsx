@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { StudentAttendanceFormControls } from "@/config";
 import CommonForm from "@/components/common/CommonForm";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -17,6 +17,7 @@ import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
 
 const studentAttendanceSchema = z.object({
+  academicYear: z.string().min(1, "Academic year is required"),
   classId: z.string().min(1, "Class is required"),
   subject: z.string().min(1, "Subject is required"),
   date: z.string().min(1, "Date is required"),
@@ -41,9 +42,19 @@ const StudentAttendance = () => {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Generate academic years from 1900 to 2300
+  const academicYears = useMemo(() => {
+    const years = [];
+    for (let year = 1900; year <= 2300; year++) {
+      years.push(`${year}-${year + 1}`);
+    }
+    return years;
+  }, []);
+
   const form = useForm({
     resolver: zodResolver(studentAttendanceSchema),
     defaultValues: {
+      academicYear: "",
       classId: "",
       subject: "",
       date: "",
@@ -129,6 +140,7 @@ const StudentAttendance = () => {
   };
 
   const onSubmit = async (formData) => {
+    if (submitting) return; // prevent double submission
     if (!teacherId) {
       toast.error("Teacher information missing");
       return;
@@ -153,6 +165,18 @@ const StudentAttendance = () => {
   const enhancedFormControls = StudentAttendanceFormControls.filter(
     (control) => control.id !== "attendanceList"
   ).map((control) => {
+    if (control.id === "academicYear") {
+      return {
+        ...control,
+        type: "search-select",
+        options: academicYears.map((year) => ({
+          label: year,
+          value: year,
+        })),
+        disabled: initialLoading,
+        placeholder: "Search academic years...",
+      };
+    }
     if (control.id === "classId") {
       return {
         ...control,

@@ -66,6 +66,7 @@ const RegTeachers = () => {
   }, []);
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return; // Prevent multiple submissions
     setIsSubmitting(true);
     try {
       const payload = {

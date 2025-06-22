@@ -70,10 +70,12 @@ const {
   bulkUpdateResults,
   getClassResultsOverview,
   updateResultForStudent,
+  getRegisteredAcademicYears,
 } = require("../controller/resultcontroll");
 router.post("/results/:teacherId", submitResultsForClassSubject);
 router.put("/results/:resultId", updateResultForStudent);
 router.get("/results/student/:studentId", getStudentResults);
+router.get("/results/academicyear", getRegisteredAcademicYears);
 router.get("/results", getResultsByClassSubjectYear); // uses query params
 router.put("/bulk", bulkUpdateResults); // bulk update
 router.get("/ResultMark/:classId", getClassResultsOverview);
@@ -89,6 +91,10 @@ const {
   bulkUpdateAttendance,
   getMonthlySummary,
   getAttendanceTrends,
+  getLoggedInStudentAttendance,
+  getStudentSubjects,
+  getStudentAttendanceSummary,
+  getStudentAttendanceByAcademicYear,
 } = require("../controller/attendenceAsudent");
 // const checkRole = require("../middle/authmiddle");
 
@@ -113,7 +119,15 @@ router.get(
 router.get(
   "/attendance/student/:studentId",
   // checkRole(["student", "admin"]),
-  getStudentAttendance
+  (req, res) => {
+    const { studentId } = req.params;
+    const { academicYear, startDate, endDate } = req.query;
+    getStudentAttendance(req, res, studentId, startDate, endDate, academicYear);
+  }
+);
+router.get(
+  "/attendance/by-academic-year/:studentId",
+  getStudentAttendanceByAcademicYear
 );
 router.get(
   "/attendance/monthly/:studentId",
@@ -125,13 +139,26 @@ router.get(
 router.get(
   "/attendance/rates/:classId",
   // checkRole(["admin"]),
-  getAttendanceRatesForClass
+  (req, res) => {
+    const { classId } = req.params;
+    const { academicYear } = req.query;
+    getAttendanceRatesForClass(req, res, classId, academicYear);
+  }
 );
+router.get("/student/myself", authVerification, getLoggedInStudentAttendance);
+router.get("/student/subjects", authVerification, getStudentSubjects);
+router.get("/student/summary", authVerification, getStudentAttendanceSummary);
+
 router.get(
   "/:classId/subject/:subjectId",
   // checkRole(["admin"]),
-  getAttendanceRatesBySubject
+  (req, res) => {
+    const { classId, subjectId } = req.params;
+    const { academicYear } = req.query;
+    getAttendanceRatesBySubject(req, res, classId, subjectId, academicYear);
+  }
 );
+
 router.get(
   "/reports/class/:classId",
   // checkRole(["admin"]),
@@ -151,11 +178,15 @@ const {
   getAssignmentStatus,
   getStudentAssignments,
   getTeacherAssignments,
+  getAssignmentDetails,
 } = require("../controller/assignmentController");
 
 // Teacher creates an assignment
 router.post("/assignments/create/:userId", createAssignment);
-router.get("/assignments/all", getStudentAssignments);
+router.get("/assignments/student", authVerification, getStudentAssignments);
+// backend
+router.get("/assignment/details/:assignmentId", getAssignmentDetails);
+
 router.get("/assignments/teacher/:userId", getTeacherAssignments);
 // Student updates their status
 router.post("/assignments/viewed", markAssignmentViewed);

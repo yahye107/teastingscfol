@@ -1,23 +1,33 @@
 const Attendance = require("../models/studentAttendance");
 const Student = require("../models/student");
+const Subject = require("../models/subject");
+
 // POST - Mark student attendance
 const markStudentAttendance = async (req, res) => {
   try {
-    const { userId } = req.params; // Changed from teacherId to userId
-    const { classId, subject, periodStart, periodEnd, date, attendanceList } =
-      req.body;
+    const { userId } = req.params;
+    const {
+      classId,
+      subject,
+      periodStart,
+      periodEnd,
+      date,
+      attendanceList,
+      academicYear,
+    } = req.body;
 
-    // Validate required fields
     if (
       !classId ||
       !subject ||
       !periodStart ||
       !periodEnd ||
       !date ||
-      !attendanceList
+      !attendanceList ||
+      !academicYear
     ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
     const localDate = new Date(date);
     const utcDate = new Date(
       Date.UTC(
@@ -26,9 +36,9 @@ const markStudentAttendance = async (req, res) => {
         localDate.getDate()
       )
     );
-    // Create attendance records with userId
+
     const bulkData = attendanceList.map((entry) => ({
-      user: userId, // Now using userId instead of teacherId
+      user: userId,
       student: entry.studentId,
       subject,
       status: entry.status,
@@ -36,6 +46,7 @@ const markStudentAttendance = async (req, res) => {
       periodStart,
       periodEnd,
       date: utcDate,
+      academicYear,
     }));
 
     await Attendance.insertMany(bulkData);
@@ -47,39 +58,60 @@ const markStudentAttendance = async (req, res) => {
 };
 
 // Update getStudentAttendance controller
-const getStudentAttendance = async (req, res) => {
+const getStudentAttendance = async (
+  req,
+  res,
+  studentId,
+  startDate,
+  endDate,
+  academicYear
+) => {
   try {
-    const { studentId } = req.params;
-    const { startDate, endDate } = req.query;
-
     let query = { student: studentId };
 
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      // Remove timezone conversion (dates already UTC)
       query.date = {
-        $gte: start,
-        $lte: end,
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
     }
 
+    if (academicYear && academicYear !== "All") {
+      query.academicYear = academicYear;
+    }
+
     const attendance = await Attendance.find(query)
-      .populate({ path: "user", select: "fullName" })
-      .populate("subject", "name")
+      .populate({ path: "user", select: "fullName" }) // teacher who marked it
+      .populate({ path: "subject", select: "name" }) // subject name
+      .populate({
+        path: "student",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      }) // ✅ this gets the student fullName from the linked user
       .sort({ date: -1 })
       .lean();
 
-    // Format dates to local string without converting
     const result = attendance.map((entry) => ({
       ...entry,
       markedBy: entry.user?.fullName || "Unknown",
       subject: entry.subject?.name || "Unknown",
-      date: new Date(entry.date).toLocaleDateString("en-US"), // Keep local format
+      studentName: entry.student?.user?.fullName || "Unknown",
+      date: new Date(entry.date).toLocaleDateString("en-US"),
+      academicYear: entry.academicYear,
     }));
 
-    res.status(200).json({ result });
+    res.status(200).json({
+      result,
+      meta: {
+        totalRecords: result.length,
+        academicYear: academicYear || "All Years",
+        studentId,
+        dateRange:
+          startDate && endDate ? `${startDate} to ${endDate}` : "All Dates",
+      },
+    });
   } catch (error) {
     console.error("Error fetching attendance:", error);
     res.status(500).json({ message: "Server error" });
@@ -87,17 +119,19 @@ const getStudentAttendance = async (req, res) => {
 };
 
 // GET - Attendance rates for a class
-const getAttendanceRatesForClass = async (req, res) => {
+const getAttendanceRatesForClass = async (req, res, classId, academicYear) => {
   try {
-    const { classId } = req.params;
-
     const students = await Student.find({ classId }).select("_id");
 
     const results = await Promise.all(
       students.map(async (student) => {
-        const allRecords = await Attendance.find({ student: student._id });
-        const total = allRecords.length;
+        const query = { student: student._id };
+        if (academicYear && academicYear !== "All") {
+          query.academicYear = academicYear;
+        }
 
+        const allRecords = await Attendance.find(query);
+        const total = allRecords.length;
         const presentCount = allRecords.filter(
           (entry) => entry.status === "Present"
         ).length;
@@ -108,6 +142,8 @@ const getAttendanceRatesForClass = async (req, res) => {
         return {
           studentId: student._id,
           attendanceRate: percentage,
+          totalRecords: total,
+          academicYear: academicYear || "All Years",
         };
       })
     );
@@ -119,39 +155,27 @@ const getAttendanceRatesForClass = async (req, res) => {
   }
 };
 //////////////
-const getAttendanceRatesBySubject = async (req, res) => {
+const getAttendanceRatesBySubject = async (
+  req,
+  res,
+  classId,
+  subjectId,
+  academicYear
+) => {
   try {
-    const { classId, subjectId } = req.params;
-
-    // Calculate start and end of the current day (resets daily at midnight)
-    const currentDate = new Date();
-    const academicYearStart = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      currentDate.getDate(),
-      0,
-      0,
-      0 // Set to midnight (00:00:00) of the current day
-    );
-    const academicYearEnd = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      currentDate.getDate() + 1, // Next day
-      0,
-      0,
-      0 // Midnight of the next day
-    );
-
     const students = await Student.find({ classId }).select("_id");
 
     const results = await Promise.all(
       students.map(async (student) => {
-        const allRecords = await Attendance.find({
+        const query = {
           student: student._id,
           subject: subjectId,
-          date: { $gte: academicYearStart, $lt: academicYearEnd }, // Filter by today's date
-        });
+        };
+        if (academicYear && academicYear !== "All") {
+          query.academicYear = academicYear;
+        }
 
+        const allRecords = await Attendance.find(query);
         const total = allRecords.length;
         const presentCount = allRecords.filter(
           (entry) => entry.status === "Present"
@@ -162,7 +186,10 @@ const getAttendanceRatesBySubject = async (req, res) => {
 
         return {
           studentId: student._id,
+          subjectId,
           attendanceRate: percentage,
+          totalRecords: total,
+          academicYear: academicYear || "All Years",
         };
       })
     );
@@ -173,6 +200,93 @@ const getAttendanceRatesBySubject = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// controller/attendanceController.js
+
+const getStudentAttendanceByAcademicYear = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { academicYear } = req.query;
+
+    if (!studentId || !academicYear) {
+      return res
+        .status(400)
+        .json({ message: "Missing studentId or academicYear" });
+    }
+
+    const query = {
+      student: studentId,
+      academicYear,
+    };
+
+    const attendanceRecords = await Attendance.find(query)
+      .populate({ path: "user", select: "fullName" }) // teacher
+      .populate({ path: "subject", select: "name" }) // subject
+      .populate({
+        path: "student",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .sort({ date: -1 })
+      .lean();
+
+    // Map full records
+    const result = attendanceRecords.map((entry) => ({
+      ...entry,
+      markedBy: entry.user?.fullName || "Unknown",
+      subject: entry.subject?.name || "Unknown",
+      studentName: entry.student?.user?.fullName || "Unknown",
+      date: new Date(entry.date).toLocaleDateString("en-US"),
+    }));
+
+    // Calculate attendance rate per subject
+    const subjectSummary = {};
+    for (const entry of attendanceRecords) {
+      const subjectId = entry.subject?._id?.toString();
+      const subjectName = entry.subject?.name || "Unknown";
+
+      if (!subjectSummary[subjectId]) {
+        subjectSummary[subjectId] = {
+          subjectId,
+          subjectName,
+          total: 0,
+          present: 0,
+        };
+      }
+
+      subjectSummary[subjectId].total += 1;
+      if (entry.status === "Present") {
+        subjectSummary[subjectId].present += 1;
+      }
+    }
+
+    const subjectRates = Object.values(subjectSummary).map((s) => ({
+      subjectId: s.subjectId,
+      subjectName: s.subjectName,
+      totalRecords: s.total,
+      presentCount: s.present,
+      attendanceRate:
+        s.total > 0 ? ((s.present / s.total) * 100).toFixed(1) + "%" : "N/A",
+    }));
+
+    res.status(200).json({
+      success: true,
+      records: result,
+      subjectRates,
+      meta: {
+        studentId,
+        academicYear,
+        totalRecords: result.length,
+        subjectsWithAttendance: subjectRates.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching attendance by academic year:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // a. Edit Attendance
 // Backend Controller (attendenceAsudent.js)
 // a. Edit Attendance
@@ -370,7 +484,119 @@ const getAttendanceTrends = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const getLoggedInStudentAttendance = async (req, res) => {
+  try {
+    const userId = req.userInfo._id;
+    const { subjectId, academicYear } = req.query;
+
+    // Find student based on authenticated user
+    const student = await Student.findOne({ user: userId });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    // Build query with filters
+    const query = { student: student._id };
+    if (subjectId) query.subject = subjectId;
+    if (academicYear && academicYear !== "All")
+      query.academicYear = academicYear;
+
+    const attendance = await Attendance.find(query)
+      .populate({ path: "user", select: "fullName" })
+      .populate({ path: "subject", select: "name" })
+      .sort({ date: -1 })
+      .lean();
+
+    // Format response
+    const formatted = attendance.map((entry) => ({
+      _id: entry._id,
+      date: entry.date,
+      subject: entry.subject?.name || "Unknown",
+      status: entry.status,
+      markedBy: entry.user?.fullName || "Unknown",
+      academicYear: entry.academicYear,
+      periodStart: entry.periodStart,
+      periodEnd: entry.periodEnd,
+    }));
+
+    res.status(200).json({
+      studentName: student.fullName,
+      totalRecords: formatted.length,
+      records: formatted,
+    });
+  } catch (error) {
+    console.error("Error getting student attendance:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get unique subjects for a student
+const getStudentSubjects = async (req, res) => {
+  try {
+    const userId = req.userInfo._id;
+    const student = await Student.findOne({ user: userId });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    // Get distinct subjects from student's attendance records
+    const subjectIds = await Attendance.distinct("subject", {
+      student: student._id,
+    });
+
+    // Get subject details
+    const subjects = await Subject.find(
+      { _id: { $in: subjectIds } },
+      { _id: 1, name: 1 }
+    );
+
+    res.status(200).json({ subjects });
+  } catch (error) {
+    console.error("Error getting student subjects:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get attendance summary for student
+const getStudentAttendanceSummary = async (req, res) => {
+  try {
+    const userId = req.userInfo._id;
+    const student = await Student.findOne({ user: userId });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    const allRecords = await Attendance.find({ student: student._id });
+
+    // Calculate summary statistics
+    const summary = {
+      Present: 0,
+      Absent: 0,
+      Late: 0,
+      Excused: 0,
+      total: allRecords.length,
+    };
+
+    allRecords.forEach((record) => {
+      if (summary.hasOwnProperty(record.status)) {
+        summary[record.status]++;
+      }
+    });
+
+    res.status(200).json(summary);
+  } catch (error) {
+    console.error("Error getting attendance summary:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
+  getLoggedInStudentAttendance,
+  getStudentSubjects,
+  getStudentAttendanceSummary,
   markStudentAttendance,
   getAttendanceRatesForClass,
   getStudentAttendance,
@@ -378,6 +604,7 @@ module.exports = {
   updateAttendance,
   getDailySummary,
   getClassAttendanceReport,
+  getStudentAttendanceByAcademicYear,
   bulkUpdateAttendance,
   getMonthlySummary,
   checkAttendanceThreshold,

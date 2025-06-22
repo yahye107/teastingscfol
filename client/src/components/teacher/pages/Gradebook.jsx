@@ -16,6 +16,7 @@ import GlobalLoader from "@/components/common/GlobalLoader";
 import { useUser } from "@/useContaxt/UseContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
 
 // Schema for validation
 export const resultSchema = z.object({
@@ -58,7 +59,13 @@ const Gradebook = ({ teacherId }) => {
     form;
   const { fields } = useFieldArray({ control, name: "results" });
   const selectedClassId = watch("classId");
-
+  const academicYears = useMemo(() => {
+    const years = [];
+    for (let year = 1900; year <= 2300; year++) {
+      years.push(`${year}-${year + 1}`);
+    }
+    return years;
+  }, []);
   // Fetch classes and subjects
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -112,6 +119,7 @@ const Gradebook = ({ teacherId }) => {
 
   // Submit results
   const onSubmit = async (data) => {
+    if (submitting) return;
     try {
       setSubmitting(true);
 
@@ -144,6 +152,18 @@ const Gradebook = ({ teacherId }) => {
   const enhancedFormControls = ResultFormControls.filter(
     (control) => control.id !== "results"
   ).map((control) => {
+    if (control.id === "academicYear") {
+      return {
+        ...control,
+        type: "search-select",
+        options: academicYears.map((year) => ({
+          label: year,
+          value: year,
+        })),
+        disabled: loading,
+        placeholder: "Search academic years...",
+      };
+    }
     if (control.id === "classId") {
       return {
         ...control,
