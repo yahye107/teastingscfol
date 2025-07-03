@@ -668,7 +668,35 @@ export const callDeleteExamApi = async (id) => {
   );
   return response.data;
 };
-
+export const callGetStudentHallApi = async (studentId) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/class/EaxmTable/${studentId}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+export const callGetStudentsByHallApi = async (examId, hallId) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/class/exams/${examId}/halls/${hallId}/students`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+export const callGetStudentsByExamTitleAndHallApi = async (title, hallId) => {
+  const encodedTitle = encodeURIComponent(title); // Make URL safe
+  const response = await axios.get(
+    `http://localhost:5000/api/class/exams/title/${encodedTitle}/hall/${hallId}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+export const callGetAllExamApi = async () => {
+  const response = await axios.get(
+    `http://localhost:5000/api/class/EaxmTable/all-exams`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
 // ✅ Get exam timetable for a class
 export const callGetClassExamTableApi = async (classId) => {
   const response = await axios.get(
@@ -1074,4 +1102,63 @@ export const callGetTeacherAssignmentsApi = async (userId) => {
       withCredentials: true,
     }
   );
+};
+//////////payment
+export const callCreatePaymentApi = async (formData) => {
+  const response = await axios.post(
+    "http://localhost:5000/api/auth/payments/create",
+    formData,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+export const callGetAllPaymentsApi = async () => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/payments/GetAll`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
+export const callGetPaymentsByStudentIdApi = async (studentId) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/payments/student/${studentId}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
+export const callGetPaymentsByClassIdApi = async (classId) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/payments/class/${classId}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+export const callUpdatePaymentApi = async (paymentId, updatedData) => {
+  const response = await axios.put(
+    `http://localhost:5000/api/auth/payments/update/${paymentId}`,
+    updatedData,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+export const callDeletePaymentApi = async (paymentId) => {
+  const response = await axios.delete(
+    `http://localhost:5000/api/auth/payments/delete/${paymentId}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
 };

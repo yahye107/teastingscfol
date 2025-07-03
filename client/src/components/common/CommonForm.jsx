@@ -260,6 +260,9 @@ function CommonForm({
                 <SelectContent className="bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 shadow-lg p-0">
                   <Command
                     shouldFilter={false}
+                    loop={false} // prevents up/down arrow selection
+                    // ideally, stop propagation too
+                    onKeyDown={(e) => e.stopPropagation()} // prevent Radix Select keyboard handling
                     className="rounded-lg border shadow-md"
                   >
                     <CommandInput

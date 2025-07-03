@@ -15,7 +15,12 @@ routes.get("/protected", authVerification, (req, res) => {
   if (req.teacherInfo) {
     response.teacher = req.teacherInfo;
   }
-  if (req.studentInfo) response.student = req.studentInfo;
+  if (req.parentInfo) {
+    response.parent = req.parentInfo;
+  }
+  if (req.studentInfo) {
+    response.student = req.studentInfo;
+  }
   res.status(200).json(response);
 });
 const {
@@ -191,3 +196,19 @@ routes.get("/force-test-email", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Add this route TO CRAEET a payment
+const {
+  createPayment,
+  getAllStudentPayments,
+  getStudentPaymentsById,
+  getPaymentsByClassId,
+  updatePayment,
+  deletePayment,
+} = require("../controller/createPayment ");
+routes.post("/payments/create", createPayment);
+routes.get("/payments/GetAll", getAllStudentPayments);
+routes.get("/payments/student/:id", getStudentPaymentsById);
+routes.get("/payments/class/:classId", getPaymentsByClassId);
+routes.put("/payments/update/:id", updatePayment);
+routes.delete("/payments/delete/:id", deletePayment);

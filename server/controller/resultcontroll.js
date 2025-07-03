@@ -76,6 +76,7 @@ const getStudentResults = async (req, res) => {
 
     const results = await Result.find(query)
       .populate("subject", "name")
+
       .select(
         "subject name academicYear attendanceRate firstExam midExam thirdExam finalExam activities total lastUpdatedBy createdBy updatedAt createdAt"
       );

@@ -79,9 +79,8 @@ const StudentInfo = () => {
     const fetchStudents = async () => {
       try {
         const { students } = await callGetAllStudentsApi();
-        const recentStudents = students.slice(-5);
-        setStudents(recentStudents);
-        setFilteredStudents(recentStudents);
+        setStudents(students);
+        setFilteredStudents(students.slice(-5)); // default view: 5
       } catch (err) {
         console.error("Error fetching students", err);
         toast.error("Failed to load students");
@@ -199,7 +198,7 @@ const StudentInfo = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Students List */}
         <Card className="lg:col-span-1 h-[400px]">
-          <CardContent className="p-2 space-y-2">
+          <CardContent className="p-2 space-y-2 overflow-y-auto max-h-[360px]">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 rounded-lg" />

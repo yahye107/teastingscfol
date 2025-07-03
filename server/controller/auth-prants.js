@@ -30,7 +30,9 @@ const createParent = async (req, res) => {
       address,
       children: [],
     });
-
+    await User.findByIdAndUpdate(user._id, {
+      parentProfile: parent._id,
+    });
     // await sendCredentialsEmail(email, fullName, password);
 
     res.status(201).json({ message: "Parent created successfully", parent });

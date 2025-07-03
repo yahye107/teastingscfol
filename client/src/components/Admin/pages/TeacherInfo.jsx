@@ -77,8 +77,8 @@ const TeacherInfo = () => {
       try {
         const { teachers } = await callGetAllTeachersApi();
         const recentTeachers = teachers.slice(-5);
-        setTeachers(recentTeachers);
-        setFilteredTeachers(recentTeachers);
+        setTeachers(teachers);
+        setFilteredTeachers(teachers.slice(-5));
       } catch (err) {
         console.error("Error fetching teachers", err);
         toast.error("Failed to load teachers");
@@ -196,7 +196,7 @@ const TeacherInfo = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Teachers List */}
         <Card className="lg:col-span-1">
-          <CardContent className="p-2 space-y-2">
+          <CardContent className="p-2 space-y-2 overflow-y-auto max-h-[360px]">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 rounded-lg" />

@@ -161,6 +161,7 @@ const TimeTable = () => {
   };
 
   const handleSubmit = async (data) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       if (selectedTimetable) {

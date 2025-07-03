@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Student",
   },
+  parentProfile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Parent",
+  },
   profilePic: String,
   createdAt: { type: Date, default: Date.now },
 });

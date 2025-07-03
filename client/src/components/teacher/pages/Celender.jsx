@@ -54,9 +54,9 @@ const TeacherCalendar = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (user?.teacherProfile) {
+        if (user?.teacherProfile?._id) {
           const timetable = await callGetTeacherWeeklyTimetableApi(
-            user.teacherProfile
+            user.teacherProfile._id
           );
           setTimetableData(timetable);
         }

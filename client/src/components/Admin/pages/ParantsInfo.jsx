@@ -35,7 +35,7 @@ const ParantsInfo = () => {
         const data = await callGetAllParentsApi();
         // Get last 5 registered parents (assuming they're ordered by registration date)
         const recentParents = data.parents.slice(-5);
-        setAllParents(recentParents);
+        setAllParents(data.parents);
         setFilteredParents(recentParents);
       } catch (error) {
         console.error("Error fetching parents:", error);
@@ -89,7 +89,7 @@ const ParantsInfo = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Parents List */}
         <Card className="lg:col-span-1">
-          <CardContent className="p-2 space-y-2">
+          <CardContent className="p-2 space-y-2 overflow-y-auto max-h-[360px]">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 rounded-lg" />

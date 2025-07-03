@@ -40,7 +40,7 @@ const SIDEBAR_ITEMS = [
     section: "Dashboard",
     icon: LayoutGrid,
     color: "#6366f1",
-    href: "/admin/dashboard",
+    href: "/teacher/dashboard",
   },
   {
     section: "Attendance",
@@ -58,7 +58,7 @@ const SIDEBAR_ITEMS = [
     section: "Assignments",
     icon: ClipboardList,
     color: "#ef4444",
- href: "/teacher/dashboard/Assegment",
+    href: "/teacher/dashboard/Assegment",
   },
   {
     section: "Communications",

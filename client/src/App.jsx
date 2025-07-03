@@ -8,7 +8,7 @@ import Login from "./components/auth/Login";
 import Notfound from "./pages/notfound";
 import StudentDash from "./components/student/pages/StudentDash";
 import TeacherDash from "./components/teacher/teacher";
-import ParantsDash from "./components/parant/ParantsDash";
+import ParantsDash from "./components/parant/pages/ParantsDash";
 import AdminDash from "./components/Admin/pages/AdminDash";
 import Home from "./components/Admin/pages/Home";
 import RegStudents from "./components/Admin/pages/students";
@@ -52,6 +52,22 @@ import StudentGrade from "./components/student/pages/studentGrade";
 import StudentAttendencePage from "./components/student/pages/StudentAttendence";
 import StudentMassages from "./components/student/pages/StudentMassages";
 import AssignmentDetails from "./components/teacher/pages/AssignmentDetails";
+import Recordes from "./components/Admin/pages/Recordes";
+import Fees from "./components/student/pages/fees";
+import HallExam from "./components/Admin/pages/HallExam";
+import StdentHallinfo from "./components/Admin/pages/StdentHallinfo";
+import ExamHall from "./components/student/pages/ExamHall";
+import ExamTable from "./components/student/pages/ExamTable";
+import PrantsHome from "./components/parant/pages/PrantsHome";
+import MyCHildren from "./components/parant/pages/MyCHildren";
+import StudentsHome from "./components/student/pages/StudentsHome";
+import MyCHildrenAttendence from "./components/parant/pages/MyCHildrenAttendence";
+import SelectedChildrenAttendence from "./components/parant/pages/SelectedChildrenAttendence";
+import MyChildrenGrade from "./components/parant/pages/MyChildrenGrade";
+import TheSlectedCHildrenGrade from "./components/parant/pages/TheSlectedCHildrenGrade";
+import TheSelectedChildrenGrade from "./components/parant/pages/TheSlectedCHildrenGrade";
+import PrantFeeREcord from "./components/parant/pages/PrantFeeREcord";
+import PrantsMss from "./components/parant/pages/PrantsMss";
 
 const App = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -104,15 +120,18 @@ const App = () => {
         <Route path="login" element={<Login />} />
       </Route>
       <Route path="*" element={<Notfound />} />
-      <Route path="student" element={<StudentDash />} />
-      <Route path="/teacher" element={<TeacherDash />} />
+      {/* <Route path="student" element={<StudentDash />} /> */}
+      {/* <Route path="/teacher" element={<TeacherDash />} /> */}
       <Route path="admin/dashboard" element={<AdminDash />}>
         <Route index element={<Home />} />
         <Route path="studentRegister" element={<RegStudents />} />
+        <Route path="exam-halls" element={<HallExam />} />
+        <Route path="Recordes" element={<Recordes />} />
         <Route path="Parantsregister" element={<Parants />} />
         <Route path="parantinfo" element={<ParantsInfo />} />
         <Route path="StudentInfo" element={<StudentInfo />} />
         <Route path="FeeRecords" element={<FeeRecords />} />
+        <Route path="StudentHallInfo" element={<StdentHallinfo />} />
         <Route path="Tescher" element={<TeacherRegister />} />
         <Route path="TeacherInfo" element={<TeacherInfo />} />
         <Route path="Halls" element={<Halls />} />
@@ -138,8 +157,15 @@ const App = () => {
         <Route path="mangingEvents" element={<ManageEvents />} />
       </Route>
       <Route path="/student/dashboard" element={<StudentDash />}>
-        <Route index element={<StudentDash />} />
+        <Route index element={<StudentsHome />} />
         <Route path="Studentcelender" element={<StudentCelender />} />
+        <Route
+          path="/student/dashboard/exam-table/:examTitle"
+          element={<ExamTable />}
+        />
+
+        <Route path="fees" element={<Fees />} />
+        <Route path="ExamsHallS" element={<ExamHall />} />
         <Route path="Studentmassages" element={<StudentMassages />} />
         <Route
           path="TudentattendancePage"
@@ -150,7 +176,7 @@ const App = () => {
         {/* <Route path="UpdateGradebook" element={<UpdateGrade />} /> */}
         <Route path="StudentAssegment" element={<StudentAssegment />} />
       </Route>
-      <Route path="teacher/dashboard" element={<TeacherDash />}>
+      <Route path="/teacher/dashboard" element={<TeacherDash />}>
         <Route index element={<Teacherhome />} />
         <Route path="massages" element={<Massages />} />
         <Route path="attendance" element={<STuAttendence />} />
@@ -164,7 +190,22 @@ const App = () => {
           element={<AssignmentDetails />}
         />
       </Route>
-      <Route path="/parent/dashboard" element={<ParantsDash />} />
+      <Route path="/parent/dashboard" element={<ParantsDash />}>
+        <Route index element={<PrantsHome />} />
+        <Route path="Mychildren" element={<MyCHildren />} />
+        <Route path="MychildrenAttendence" element={<MyCHildrenAttendence />} />
+        <Route path="MyChildrenGrade" element={<MyChildrenGrade />} />
+        <Route path="PrantFeeREcord" element={<PrantFeeREcord />} />
+        <Route path="PrantsMss" element={<PrantsMss />} />
+        <Route
+          path="TheSlectedCHild/:childId"
+          element={<TheSelectedChildrenGrade />}
+        />
+        <Route
+          path="SelectedChildrenAttendence/:childId"
+          element={<SelectedChildrenAttendence />}
+        />
+      </Route>
     </Routes>
   );
 };

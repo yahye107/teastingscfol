@@ -1,31 +1,18 @@
 import {
-  BarChart2,
-  LogOut,
-  Settings,
-  Users,
-  BookOpen,
-  FileText,
-  Bus,
-  ClipboardList,
-  DollarSign,
-  School,
-  UserCheck,
-  UserPlus,
-  UserCog,
-  FolderOpen,
-  ChevronDown,
-  GraduationCap,
-  User,
-  Notebook,
-  Clock,
-  BusFront,
-  Package,
-  AlignLeft,
-  CreditCard,
-  Award,
   LayoutGrid,
-  Bookmark,
-  ListChecks,
+  CalendarClock,
+  ClipboardList,
+  FileText,
+  UserCheck,
+  MessageSquare,
+  Trophy,
+  FolderOpen,
+  User,
+  Users,
+  AlignLeft,
+  LogOut,
+  DollarSign,
+  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -39,112 +26,58 @@ const SIDEBAR_ITEMS = [
     section: "Dashboard",
     icon: LayoutGrid,
     color: "#6366f1",
-    href: "/admin/dashboard",
+    href: "/parent/dashboard",
   },
   {
-    section: "User Management",
-    icon: Users,
+    section: "My Children",
+    icon: CalendarClock,
+    color: "#8b5cf6",
+    href: "/parent/dashboard/mychildren",
+  },
+  {
+    section: "Attendance",
+    icon: UserCheck,
     color: "#10b981",
-    subItems: [
-      {
-        name: "Students",
-        href: "studentRegister",
-        icon: GraduationCap,
-      },
-      { name: "Parents", href: "Parantsregister", icon: UserPlus },
-      { name: "Teachers", href: "Tescher", icon: UserCheck },
-      { name: "Staff", href: "/admindash/users/staff", icon: UserCog },
-      { name: "Users", href: "usersinfo", icon: User },
-    ],
+    href: "/parent/dashboard/SelectedChildrenAttendence/:childId",
   },
   {
-    section: "School Structure",
-    icon: Bookmark,
-    color: "#8b5cf6",
-    subItems: [
-      { name: "Classes", href: "class", icon: Notebook },
-      { name: "Subjects", href: "subjects", icon: BookOpen },
-      { name: "Halls", href: "Halls", icon: BookOpen },
-      { name: "Timetable", href: "timeTable", icon: Clock },
-    ],
-  },
-  {
-    section: "Exams",
-    icon: ClipboardList,
-    color: "#2563eb",
-    subItems: [
-      { name: "ExamTbale", href: "ExamTbale", icon: Clock },
-      { name: "Hall Assignments", href: "exam-halls", icon: ListChecks },
-
-      {
-        name: "Student Hall Info",
-        href: "StudentHallInfo",
-        icon: GraduationCap,
-      },
-    ],
-  },
-  {
-    section: "School Anouncement",
-    icon: School,
-    color: "#8b5cf6",
-    subItems: [
-      { name: "Events", href: "AdminEvents", icon: Settings },
-      { name: "Anouncement", href: "AdminAnouncement", icon: Settings },
-      { name: "Manage Marks", href: "Track", icon: FileText },
-      // { name: "View Marks", href: "MarkHistroy", icon: FileText },
-      {
-        name: "Reports",
-        icon: ClipboardList,
-        color: "#3b82f6",
-        href: "/admindash/reports",
-      },
-
-      { name: "Teacher Attendence", href: "Tatendence", icon: GraduationCap },
-      { name: "Attendence Histroy", href: "Histroyattendence", icon: Clock },
-    ],
-  },
-  {
-    section: "Finance",
-    icon: CreditCard,
+    section: "Grades",
+    icon: FileText,
     color: "#f59e0b",
-    subItems: [
-      {
-        name: "Fee Records",
-        href: "FeeRecords",
-        icon: FileText,
-      },
-      {
-        name: "Records",
-        href: "Recordes",
-        icon: Award,
-      },
-    ],
+    href: "/parent/dashboard/MyChildrenGrade",
   },
-
   {
-    section: "Logistics",
-    icon: Package,
+    section: "Assignments",
+    icon: ClipboardList,
     color: "#ef4444",
-    subItems: [
-      {
-        name: "Transportation",
-        href: "/admindash/logistics/transport",
-        icon: BusFront,
-      },
-      {
-        name: "Inventory",
-        href: "/admindash/logistics/inventory",
-        icon: FolderOpen,
-      },
-    ],
+    href: "/parent/dashboard/assignments",
   },
-  // {
-  //   section: "Logout",
-  //   icon: LogOut,
-  //   color: "#ef4444",
-  //   href: "/logout",
-  // },
+  {
+    section: "Messages",
+    icon: MessageSquare,
+    color: "#3b82f6",
+    href: "/parent/dashboard/PrantsMss",
+  },
+  {
+    section: "Fee Portal",
+    icon: DollarSign,
+    color: "#14b8a6",
+    href: "/parent/dashboard/PrantFeeREcord",
+  },
+  {
+    section: "School Calendar",
+    icon: Calendar, // Use Calendar or CalendarDays icon if available
+    color: "#0ea5e9",
+    href: "/parent/dashboard/calendar",
+  },
+  {
+    section: "Profile",
+    icon: User,
+    color: "#6366f1",
+    href: "/parent/dashboard/profile",
+  },
 ];
+
 {
   /* Logout Button */
 }
@@ -200,7 +133,7 @@ const Sidebar = ({ onItemClick }) => {
         <div className="flex items-center gap-3 mb-8 px-2">
           <div className="relative">
             <img
-              src="/images/admin.jpg"
+              src="/images/teacher.jpg"
               alt="Admin"
               className="w-9 h-9 rounded-full object-cover border-2 border-indigo-200 shadow-sm"
             />

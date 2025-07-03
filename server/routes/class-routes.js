@@ -47,11 +47,20 @@ const {
   deleteExam,
   getClassExamTable,
   getStudentExamTable,
+  getStudentsByHall,
+  getStudentsByExamTitleAndHallId,
+  getStudentHall,
+  getAllExamTables,
+  // getExamStudentHalls,
 } = require("../controller/examController");
 
 // Create new exam
 router.post("/EaxmTable/createExamtable", createExam);
+router.get("/EaxmTable/all-exams", getAllExamTables);
 
+router.get("/EaxmTable/:studentId/", getStudentHall);
+router.get("/exams/:examId/halls/:hallId/students", getStudentsByHall);
+router.get("/exams/title/:title/hall/:hallId", getStudentsByExamTitleAndHallId);
 // Update an exam
 router.put("/EaxmTable/update/:id", updateExam);
 

@@ -101,6 +101,7 @@ const Halls = () => {
   };
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       if (selectedHall) {

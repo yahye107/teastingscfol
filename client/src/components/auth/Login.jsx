@@ -48,9 +48,9 @@ const Login = () => {
       } else if (role === "admin") {
         navigate("/admin/dashboard");
       } else if (role === "student") {
-        navigate("/student");
+        navigate("/student/dashboard");
       } else if (role === "teacher") {
-        navigate("/teacher");
+        navigate("/teacher/dashboard");
       } else {
         navigate("/");
       }
@@ -59,8 +59,8 @@ const Login = () => {
         position: "top-center",
         duration: 2000,
       });
-      if (status === "blocked"){
-      toast("you have been clocked");
+      if (status === "blocked") {
+        toast("you have been clocked");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed", {

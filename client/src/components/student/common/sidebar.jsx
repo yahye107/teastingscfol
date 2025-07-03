@@ -11,6 +11,7 @@ import {
   Users,
   AlignLeft,
   LogOut,
+  DollarSign,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -57,10 +58,16 @@ const SIDEBAR_ITEMS = [
     href: "/student/dashboard/Studentmassages",
   },
   {
-    section: "Extracurriculars",
+    section: "My Fees",
+    icon: DollarSign, // or CreditCard / Wallet depending on the icon set you use
+    color: "#14b8a6",
+    href: "/student/dashboard/fees",
+  },
+  {
+    section: "Exam Info",
     icon: Trophy,
     color: "#ec4899",
-    href: "/student/extracurriculars",
+    href: "/student/dashboard/ExamsHallS",
   },
   {
     section: "Resources",
@@ -75,7 +82,6 @@ const SIDEBAR_ITEMS = [
     href: "/student/profile",
   },
 ];
-
 
 {
   /* Logout Button */

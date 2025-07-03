@@ -67,6 +67,7 @@ const CreateExamTable = () => {
   const [subjects, setSubjects] = useState([]);
   const [halls, setHalls] = useState([]);
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   console.log(halls);
   const form = useForm({
@@ -162,6 +163,8 @@ const CreateExamTable = () => {
   });
 
   const handleSubmit = async (data) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await callCreateExamApi(data);
       toast.success("Exam created successfully");
@@ -169,6 +172,8 @@ const CreateExamTable = () => {
     } catch (error) {
       console.error("Exam creation failed:", error);
       toast.error("Failed to create exam");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -209,7 +214,8 @@ const CreateExamTable = () => {
             formControls={enhancedFormControls}
             handleSubmit={form.handleSubmit(handleSubmit)}
             form={form}
-            btnText="Create Exam"
+            btnText={isSubmitting ? "Creating..." : "Create Exam"}
+            btnDisabled={isSubmitting} // ✅ Disable during submission
             customComponents={{
               arrayAddButton: ({ onClick }) => (
                 <Button

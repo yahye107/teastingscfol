@@ -54,12 +54,10 @@ const StudentGrade = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowContent(true);
-    }, 1500); // 1.5 seconds loading simulation
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
-
-  // Show global loader while user data is loading or during simulated loading
 
   // Fetch academic years
   useEffect(() => {
@@ -132,23 +130,18 @@ const StudentGrade = () => {
             : 0;
 
           // Calculate total grade
-          const total = (
+          const total =
             result.firstExam +
             result.midExam +
             result.thirdExam +
             result.finalExam +
-            result.activities
-          ).toFixed(1);
+            result.activities;
 
           return {
             ...result,
             attendanceRate,
             total,
-            grade: getGradeLetter(parseFloat(total)),
-            lastUpdatedBy: result.updatedBy || "Unknown",
-            createdAt: result.createdAt || new Date().toISOString(),
-            updatedAt: result.updatedAt || new Date().toISOString(),
-            createdBy: result.createdBy || "System",
+            grade: getGradeLetter(total),
           };
         });
 
@@ -163,23 +156,18 @@ const StudentGrade = () => {
         );
         setDisplayResults(
           yearResults.map((r) => {
-            const total = (
+            const total =
               r.firstExam +
               r.midExam +
               r.thirdExam +
               r.finalExam +
-              r.activities
-            ).toFixed(1);
+              r.activities;
 
             return {
               ...r,
               attendanceRate: 0,
               total,
-              grade: getGradeLetter(parseFloat(total)),
-              lastUpdatedBy: r.updatedBy || "Unknown",
-              createdAt: r.createdAt || new Date().toISOString(),
-              updatedAt: r.updatedAt || new Date().toISOString(),
-              createdBy: r.createdBy || "System",
+              grade: getGradeLetter(total),
             };
           })
         );
@@ -203,6 +191,29 @@ const StudentGrade = () => {
 
     return matchesSubject && matchesSearch;
   });
+
+  // Calculate totals
+  const totals = {
+    firstExam: filteredResults.reduce((sum, r) => sum + r.firstExam, 0),
+    midExam: filteredResults.reduce((sum, r) => sum + r.midExam, 0),
+    thirdExam: filteredResults.reduce((sum, r) => sum + r.thirdExam, 0),
+    finalExam: filteredResults.reduce((sum, r) => sum + r.finalExam, 0),
+    activities: filteredResults.reduce((sum, r) => sum + r.activities, 0),
+    attendance: filteredResults.reduce((sum, r) => sum + r.attendanceRate, 0),
+    total: filteredResults.reduce((sum, r) => sum + r.total, 0),
+  };
+
+  // Calculate averages
+  const count = filteredResults.length || 1;
+  const averages = {
+    firstExam: totals.firstExam / count,
+    midExam: totals.midExam / count,
+    thirdExam: totals.thirdExam / count,
+    finalExam: totals.finalExam / count,
+    activities: totals.activities / count,
+    attendance: totals.attendance / count,
+    total: totals.total / count,
+  };
 
   // Function to show metadata details
   const showMetaData = (result) => {
@@ -241,9 +252,24 @@ const StudentGrade = () => {
         "Final Exam": result.finalExam,
         Activities: result.activities,
         Attendance: `${result.attendanceRate.toFixed(1)}%`,
-        Total: result.total,
+        Total: result.total.toFixed(1),
         Grade: result.grade,
+        "Created At": format(new Date(result.createdAt), "MMM dd, yyyy HH:mm"),
+        "Updated At": format(new Date(result.updatedAt), "MMM dd, yyyy HH:mm"),
       }));
+
+      // Add totals row
+      exportData.push({
+        Subject: "TOTALS",
+        "First Exam": totals.firstExam.toFixed(1),
+        "Mid Exam": totals.midExam.toFixed(1),
+        "Third Exam": totals.thirdExam.toFixed(1),
+        "Final Exam": totals.finalExam.toFixed(1),
+        Activities: totals.activities.toFixed(1),
+        Attendance: `${averages.attendance.toFixed(1)}%`,
+        Total: totals.total.toFixed(1),
+        Grade: getGradeLetter(averages.total),
+      });
 
       // Create worksheet
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -271,6 +297,7 @@ const StudentGrade = () => {
       setTimeout(() => setIsExporting(false), 500);
     }
   };
+
   if (userLoading || !showContent) return <GlobalLoader />;
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -373,25 +400,14 @@ const StudentGrade = () => {
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
             <p className="text-sm text-blue-700">Average Grade</p>
             <p className="text-2xl font-bold text-blue-900">
-              {(
-                filteredResults.reduce((sum, result) => {
-                  const total = result.total;
-                  return sum + parseFloat(total);
-                }, 0) / filteredResults.length
-              ).toFixed(1)}
+              {averages.total.toFixed(1)}
             </p>
           </div>
 
           <div className="bg-green-50 p-4 rounded-lg border border-green-100">
             <p className="text-sm text-green-700">Average Attendance</p>
             <p className="text-2xl font-bold text-green-900">
-              {(
-                filteredResults.reduce(
-                  (sum, result) => sum + result.attendanceRate,
-                  0
-                ) / filteredResults.length
-              ).toFixed(1)}
-              %
+              {averages.attendance.toFixed(1)}%
             </p>
           </div>
 
@@ -406,7 +422,7 @@ const StudentGrade = () => {
             <p className="text-sm text-amber-700">Highest Grade</p>
             <p className="text-2xl font-bold text-amber-900">
               {Math.max(
-                ...filteredResults.map((result) => parseFloat(result.total))
+                ...filteredResults.map((result) => result.total)
               ).toFixed(1)}
             </p>
           </div>
@@ -496,9 +512,9 @@ const StudentGrade = () => {
                   <th className="p-4 text-center font-medium text-gray-500 uppercase tracking-wider">
                     Grade
                   </th>
-                  <th className="p-4 text-center font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="p-4 text-center font-medium text-gray-500 uppercase tracking-wider">
                     Details
-                  </th>
+                  </th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -545,14 +561,14 @@ const StudentGrade = () => {
                       <td className="p-4 text-center font-semibold">
                         <div
                           className={`font-bold ${
-                            parseFloat(result.total) >= 90
+                            result.total >= 90
                               ? "text-green-600"
-                              : parseFloat(result.total) >= 70
+                              : result.total >= 70
                               ? "text-blue-600"
                               : "text-red-600"
                           }`}
                         >
-                          {result.total}
+                          {result.total.toFixed(1)}
                         </div>
                       </td>
                       <td className="p-4 text-center">
@@ -572,7 +588,7 @@ const StudentGrade = () => {
                           {result.grade}
                         </div>
                       </td>
-                      <td className="p-4 text-center">
+                      {/* <td className="p-4 text-center">
                         <button
                           onClick={() => showMetaData(result)}
                           className="text-blue-500 hover:text-blue-700"
@@ -590,10 +606,74 @@ const StudentGrade = () => {
                             />
                           </svg>
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   );
                 })}
+                {/* Totals Row */}
+                <tr className="bg-gray-50 font-semibold">
+                  <td className="p-4">Totals</td>
+                  <td className="p-4 text-center"></td>
+                  <td className="p-4 text-center text-gray-600">
+                    {totals.firstExam.toFixed(1)}
+                  </td>
+                  <td className="p-4 text-center text-gray-600">
+                    {totals.midExam.toFixed(1)}
+                  </td>
+                  <td className="p-4 text-center text-gray-600">
+                    {totals.thirdExam.toFixed(1)}
+                  </td>
+                  <td className="p-4 text-center text-gray-600">
+                    {totals.finalExam.toFixed(1)}
+                  </td>
+                  <td className="p-4 text-center text-gray-600">
+                    {totals.activities.toFixed(1)}
+                  </td>
+                  <td className="p-4 text-center">
+                    <div
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        averages.attendance >= 90
+                          ? "bg-green-100 text-green-800"
+                          : averages.attendance >= 75
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {averages.attendance.toFixed(1)}%
+                    </div>
+                  </td>
+                  <td className="p-4 text-center font-semibold">
+                    <div
+                      className={`font-bold ${
+                        averages.total >= 90
+                          ? "text-green-600"
+                          : averages.total >= 70
+                          ? "text-blue-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {totals.total.toFixed(1)}
+                    </div>
+                  </td>
+                  <td className="p-4 text-center">
+                    <div
+                      className={`text-lg font-bold ${
+                        getGradeLetter(averages.total).includes("A")
+                          ? "text-green-600"
+                          : getGradeLetter(averages.total).includes("B")
+                          ? "text-blue-600"
+                          : getGradeLetter(averages.total).includes("C")
+                          ? "text-yellow-600"
+                          : getGradeLetter(averages.total).includes("D")
+                          ? "text-orange-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {getGradeLetter(averages.total)}
+                    </div>
+                  </td>
+                  <td className="p-4 text-center"></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -601,7 +681,7 @@ const StudentGrade = () => {
       )}
 
       {/* Enhanced Metadata Dialog */}
-      {metaData && (
+      {/* {metaData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
@@ -644,7 +724,7 @@ const StudentGrade = () => {
                 <div>
                   <p className="text-sm text-gray-500">Total Grade</p>
                   <p className=" text-xl font-bold text-blue-600">
-                    {metaData.total}
+                    {metaData.total.toFixed(1)}
                   </p>
                 </div>
 
@@ -711,16 +791,8 @@ const StudentGrade = () => {
                 <p className="text-sm text-gray-500 mb-2">Record Information</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">Created By</p>
-                    <p className="font-medium">{metaData.createdBy}</p>
-                  </div>
-                  <div>
                     <p className="text-xs text-gray-500">Created At</p>
                     <p className="font-medium">{metaData.createdAt}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Last Updated By</p>
-                    <p className="font-medium">{metaData.lastUpdatedBy}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Updated At</p>
@@ -737,7 +809,7 @@ const StudentGrade = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Mobile Download Button */}
       <div className="mt-6 md:hidden">

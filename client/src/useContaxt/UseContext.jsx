@@ -1,3 +1,4 @@
+import GlobalLoader from "@/components/common/GlobalLoader";
 import { callAuthApi } from "@/service/service";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const roleRoutes = {
@@ -29,13 +31,14 @@ export const UserProvider = ({ children }) => {
           const userRole = data.user.role.toLowerCase();
           const allowedPath = roleRoutes[userRole] || "/auth";
 
-        const fullUser = {
-    ...data.user,
-    studentProfile: data.student || null,
-    // teacherProfile: data.teacher || null,
-  };
+          const fullUser = {
+            ...data.user,
+            studentProfile: data.student || null,
+            teacherProfile: data.teacher || null,
+            parentProfile: data.parent || null, // ✅ ADD THIS
+          };
 
-  setUser(fullUser);
+          setUser(fullUser);
 
           // Handle route restrictions
           if (publicRoutes.includes(location.pathname)) {
@@ -61,12 +64,24 @@ export const UserProvider = ({ children }) => {
         ) {
           navigate("/auth");
         }
+      } finally {
+        setLoading(false);
       }
     };
 
     verifyUser();
   }, [location.pathname, navigate]);
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white dark:bg-black flex items-center justify-center">
+        <div className="h-14 w-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span className="ml-4 text-xl font-semibold text-gray-700 dark:text-gray-200">
+          Checking session...
+        </span>
+      </div>
+    );
+  }
   return (
     <UserContext.Provider value={{ user, setUser }}>
       {children}
