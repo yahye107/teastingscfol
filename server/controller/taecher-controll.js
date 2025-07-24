@@ -25,14 +25,17 @@ const createTeacher = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "Teacher already exists." });
+    const baseUsername = fullName.split(" ")[0].toLowerCase();
+    let username = baseUsername;
+    const password = generateEasyPassword(username);
 
-    const password = generateEasyPassword();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       fullName,
       email,
       password: hashedPassword,
+      username,
       rawPassword: password,
       role: "teacher",
     });

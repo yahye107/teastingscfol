@@ -27,14 +27,19 @@ const createStudent = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "Student already exists." });
+    const baseUsername = fullName.split(" ")[0].toLowerCase();
+    let username = baseUsername;
+    let counter = 1;
 
-    const password = generateEasyPassword();
+    const password = generateEasyPassword(username);
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       fullName,
       email,
       password: hashedPassword,
+      username,
       role: "student",
       rawPassword: password,
     });
@@ -184,7 +189,7 @@ const getAllStudents = async (req, res) => {
     const students = await Student.find()
       .populate({
         path: "user",
-        select: "fullName email role rawPassword", // Include only necessary user fields
+        select: "fullName email role rawPassword createdAt", // Include only necessary user fields
       })
       .populate({
         path: "classId",

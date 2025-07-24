@@ -13,31 +13,38 @@ const { generateEasyPassword } = require("../utils/passwordgenetar");
 
 const registerUser = async (req, res) => {
   try {
-    const { username, email, role, ...rest } = req.body;
+    const { fullName, email, role, ...rest } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ message: "User already exists." });
 
-    const password = generateEasyPassword();
+    // Auto-generate username from fullName
+    const username = fullName.split(" ")[0].toLowerCase(); // or use .toLowerCase() if needed
+
+    const password = generateEasyPassword(username);
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
+      fullName,
       username,
       email,
       role,
       password: hashedPassword,
-      rawPassword: password, // Storing raw password for admin reference (secure this later)
+      rawPassword: password,
       ...rest,
     });
-    user.teacherProfile = teacher._id;
+
     await user.save();
 
+    // Optionally send email with credentials
     // await sendCredentialsEmail(email, username, password);
 
-    res
-      .status(201)
-      .json({ message: "User created and credentials sent to email." });
+    res.status(201).json({
+      message: "User created and credentials sent to email.",
+      username,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -81,7 +88,6 @@ const loginUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        
       },
     });
   } catch (err) {

@@ -1,32 +1,36 @@
-const nodemailer = require("nodemailer");
+// utils/emailService.js
 require("dotenv").config();
+const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 
-const sendCredentialsEmail = async (email, username, password) => {
-  const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io", // or smtp.mailtrap.io
-    port: 2525,
-    auth: {
-      user: "YOUR_MAILTRAP_USERNAME", // replace with real credentials
-      pass: "YOUR_MAILTRAP_PASSWORD",
-    },
-  });
+const mail = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 
-  async function sendEmail() {
-    try {
-      const info = await transporter.sendMail({
-        from: '"My App" <no-reply@myapp.com>',
-        to: "example@example.com",
-        subject: "Test Email from Mailtrap",
-        text: "Hello, this is a test email sent using Mailtrap and Nodemailer.",
-      });
+const sendCredentialsEmail = async (to, username, password) => {
+  const from = new Sender(process.env.EMAIL_FROM, "Your App Name");
+  const toList = [new Recipient(to)];
 
-      console.log("✅ Email sent:", info.messageId);
-    } catch (error) {
-      console.error("❌ Email failed to send:", error.message);
-    }
+  const params = new EmailParams()
+    .setFrom(from)
+    .setTo(toList)
+    .setSubject("Your Account Credentials")
+    .setHtml(
+      `
+      <p>Hello,</p>
+      <p>Here are your login details:</p>
+      <ul>
+         <li><strong>Username:</strong> ${username}</li>
+         <li><strong>Password:</strong> ${password}</li>
+      </ul>
+      <p>Please change your password after logging in.</p>
+    `
+    )
+    .setText(`Username: ${username}\nPassword: ${password}`);
+
+  try {
+    const res = await mail.email.send(params);
+    console.log("MailerSend email sent:", res);
+  } catch (err) {
+    console.error("MailerSend error:", err);
+    throw err;
   }
-
-  sendEmail();
 };
-
 module.exports = { sendCredentialsEmail };

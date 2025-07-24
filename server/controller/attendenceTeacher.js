@@ -55,7 +55,9 @@ const updateTeacherAttendance = async (req, res) => {
       return res.status(404).json({ message: "Attendance not found." });
     }
 
-    res.status(200).json({ message: "Attendance updated successfully.", updatedAttendance });
+    res
+      .status(200)
+      .json({ message: "Attendance updated successfully.", updatedAttendance });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -67,7 +69,9 @@ const getAllTeacherAttendance = async (req, res) => {
       .populate("teacher", "name email subject")
       .sort({ date: -1 });
 
-    res.status(200).json(attendance);
+    res
+      .status(200)
+      .json({ attendance, message: "get Attendance successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -83,7 +87,9 @@ const getTeacherAttendanceById = async (req, res) => {
       .select("-__v")
       .populate("teacher", "name email subject");
 
-    res.status(200).json({message: "Attendance for the teacher.",attendance});
+    res
+      .status(200)
+      .json({ message: "Attendance for the teacher.", attendance });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

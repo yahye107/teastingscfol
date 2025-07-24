@@ -1004,8 +1004,8 @@ const FeeRecords = () => {
                                       pay.status === "Paid"
                                         ? "success"
                                         : pay.status === "Pending"
-                                        ? "warning"
-                                        : "destructive"
+                                          ? "warning"
+                                          : "destructive"
                                     }
                                   >
                                     {pay.status}
