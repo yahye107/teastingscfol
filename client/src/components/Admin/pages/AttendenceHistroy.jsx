@@ -10,7 +10,7 @@ import {
   callGetAllsubjectssApi,
 } from "@/service/service";
 import { ClipLoader } from "react-spinners";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 const getStatusClasses = (status) => {
   switch (status) {
@@ -228,8 +228,8 @@ const AdminAttendanceManager = () => {
           a.attendanceRate === "N/A"
             ? 1
             : b.attendanceRate === "N/A"
-            ? -1
-            : parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate)
+              ? -1
+              : parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate)
         )
       );
     } catch (error) {

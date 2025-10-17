@@ -1,38 +1,138 @@
-import { useUser } from "@/useContaxt/UseContext";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bell, ChevronDown, Menu, X } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Menu, X, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  callGetAllStudentsApi,
+  callGetAllParentsApi,
+  callGetAllTeachersApi,
+} from "@/service/service";
 
-const Header = ({ title, onToggleSidebar, isSidebarOpen }) => {
-  const { user } = useUser();
-  const [openDropdown, setOpenDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+const Header = ({ onToggleSidebar, isSidebarOpen }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
 
-  const handleLogout = () => {
-    console.log("Logged out");
-  };
+  const [allStudents, setAllStudents] = useState([]);
+  const [allParents, setAllParents] = useState([]);
+  const [allTeachers, setAllTeachers] = useState([]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
+  const navigate = useNavigate();
 
+  // Fetch students
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpenDropdown(false);
+    const fetchStudents = async () => {
+      try {
+        const response = await callGetAllStudentsApi();
+        setAllStudents(response?.students || []);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        setAllStudents([]);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    fetchStudents();
   }, []);
 
+  // Fetch parents
+  useEffect(() => {
+    const fetchParents = async () => {
+      try {
+        const response = await callGetAllParentsApi();
+        setAllParents(response?.parents || []);
+      } catch (error) {
+        console.error("Error fetching parents:", error);
+        setAllParents([]);
+      }
+    };
+    fetchParents();
+  }, []);
+
+  // Fetch teachers
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await callGetAllTeachersApi();
+        setAllTeachers(response?.teachers || []);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+        setAllTeachers([]);
+      }
+    };
+    fetchTeachers();
+  }, []);
+
+  // Handle search
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() === "") {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    // Students
+    const filteredStudents = allStudents
+      .filter(
+        (student) =>
+          student?.user?.fullName
+            ?.toLowerCase()
+            .includes(query.toLowerCase()) ||
+          student?.email?.toLowerCase().includes(query.toLowerCase()) ||
+          student?.studentId?.toLowerCase().includes(query.toLowerCase())
+      )
+      .map((s) => ({ ...s, type: "student" }));
+
+    // Parents
+    const filteredParents = allParents
+      .filter(
+        (parent) =>
+          parent?.user?.fullName?.toLowerCase().includes(query.toLowerCase()) ||
+          parent?.user?.email?.toLowerCase().includes(query.toLowerCase()) ||
+          parent?.contact?.toLowerCase().includes(query.toLowerCase())
+      )
+      .map((p) => ({ ...p, type: "parent" }));
+
+    // Teachers
+    const filteredTeachers = allTeachers
+      .filter(
+        (teacher) =>
+          teacher?.user?.fullName
+            ?.toLowerCase()
+            .includes(query.toLowerCase()) ||
+          teacher?.user?.email?.toLowerCase().includes(query.toLowerCase()) ||
+          teacher?.employeeId?.toLowerCase().includes(query.toLowerCase())
+      )
+      .map((t) => ({ ...t, type: "teacher" }));
+
+    setSearchResults([
+      ...filteredStudents,
+      ...filteredParents,
+      ...filteredTeachers,
+    ]);
+    setShowResults(true);
+  };
+
+  // Handle select
+  const handleSelect = (item) => {
+    if (item.type === "student") {
+      navigate(`/admin/dashboard/StudentInfobyid/${item._id}`);
+    } else if (item.type === "parent") {
+      navigate(`/admin/dashboard/parant/${item._id}`);
+    } else if (item.type === "teacher") {
+      navigate(`/admin/dashboard/teacher/${item._id}`);
+    }
+
+    setSearchQuery("");
+    setShowResults(false);
+    setSearchResults([]);
+  };
+
   return (
-    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/60 dark:border-gray-700 shadow-md sticky top-0 z-50">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        {/* Mobile sidebar toggle button */}
+        {/* Sidebar toggle */}
         <button
           className="lg:hidden p-2 text-gray-700 dark:text-gray-300"
           onClick={onToggleSidebar}
@@ -40,100 +140,77 @@ const Header = ({ title, onToggleSidebar, isSidebarOpen }) => {
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Title */}
-        <div className="flex justify-center place-items-center gap-1.5">
-        <img
-                src="/images/admin.jpg"
-                alt="Avatar"
-                className="w-13 h-13 rounded-full object-cover border-2 border-indigo-200 shadow-sm"
-              />
-           <h1>Ibnu Khatiir school</h1>
-        </div>
-        {/* <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight animate-pulse bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text">
-            {title}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {getGreeting()},{" "}
-            <span className="font-medium">{user?.name || "Admin"}</span>
-          </p>
-        </div> */}
-
-        {/* Right section: Notifications & Profile */}
-        <div className="flex items-center gap-3">
-          {/* Notification bell */}
-          <div className="relative group">
-            <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition">
-              <Bell size={20} />
-            </button>
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-black rounded-md opacity-0 group-hover:opacity-100 transition">
-              Notifications
-            </span>
+        {/* Search */}
+        <div className="flex-1 px-4 relative">
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Search students, parents, or teachers..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (searchResults.length > 0) setShowResults(true);
+              }}
+              className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
-          {/* Profile dropdown */}
-          <motion.div
-            ref={dropdownRef}
-            className="relative flex items-center gap-2 group cursor-pointer p-1.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            onClick={() => setOpenDropdown((prev) => !prev)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <div className="relative">
-              <img
-                src="/images/admin.jpg"
-                alt="Avatar"
-                className="w-9 h-9 rounded-full object-cover border-2 border-indigo-200 shadow-sm"
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-            </div>
-
-            <div className="hidden sm:block text-left max-w-[160px] truncate">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {user?.name || "Admin"}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {user?.email || "admin@school.edu"}
-              </p>
-            </div>
-
-            <motion.div
-              animate={{ rotate: openDropdown ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown size={18} className="text-gray-400" />
-            </motion.div>
-
-            {/* Dropdown menu */}
-            <AnimatePresence>
-              {openDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="absolute top-full right-0 mt-2 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 z-50"
+          {/* Search Results */}
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute top-full left-4 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              {searchResults.map((item) => (
+                <div
+                  key={item._id}
+                  className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                  onClick={() => handleSelect(item)}
                 >
-                  <button
-                    onClick={() => {
-                      setOpenDropdown(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      setOpenDropdown(false);
-                      handleLogout();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-600/10"
-                  >
-                    Logout
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {item?.user?.fullName || "Unknown"}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {item.type === "student"
+                          ? item?.classId?.name || "No class"
+                          : item.type === "parent"
+                            ? item?.contact || "No contact"
+                            : item?.user?.email || "No subject"}
+                      </p>
+                    </div>
+                    {item.type === "student" && item.studentId && (
+                      <span className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-1 rounded">
+                        {item.studentId}
+                      </span>
+                    )}
+                    {item.type === "parent" && (
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">
+                        Parent
+                      </span>
+                    )}
+                    {item.type === "teacher" && (
+                      <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                        Teacher
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* No results */}
+          {showResults && searchQuery && searchResults.length === 0 && (
+            <div className="absolute top-full left-4 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-50">
+              <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                No results found matching "{searchQuery}"
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -96,9 +96,105 @@ const getAllParents = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const childrenPopulation = {
+  path: "children",
+  select:
+    "contact dob gender admissionNumber address previousSchool classId user",
+  populate: [
+    {
+      path: "user",
+      select: "fullName status email",
+    },
+    {
+      path: "classId",
+      select: "name section academicYear",
+    },
+  ],
+};
 
+const getParentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const parent = await Parent.findById(id)
+      .populate({
+        path: "user",
+        select: "fullName email status role rawPassword",
+      })
+      .populate(childrenPopulation);
+
+    if (!parent) {
+      return res.status(404).json({ message: "Parent not found." });
+    }
+
+    res.status(200).json({ message: "Parent fetched successfully", parent });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update a parent
+const updateParent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fullName, email, occupation, contact, address } = req.body;
+
+    // Find parent with user populated
+    const parent = await Parent.findById(id).populate("user");
+    if (!parent) return res.status(404).json({ message: "Parent not found." });
+
+    // Update user info
+    if (fullName) parent.user.fullName = fullName;
+    if (email) parent.user.email = email;
+    await parent.user.save();
+
+    // Update parent info
+    if (occupation) parent.occupation = occupation;
+    if (contact) parent.contact = contact;
+    if (address) parent.address = address;
+
+    await parent.save();
+
+    // 🔥 Re-fetch updated parent with children fully populated
+    const updatedParent = await Parent.findById(id)
+      .populate("user")
+      .populate(childrenPopulation);
+
+    res
+      .status(200)
+      .json({ message: "Parent updated successfully", parent: updatedParent });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteParent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the parent first
+    const parent = await Parent.findById(id);
+    if (!parent) {
+      return res.status(404).json({ message: "Parent not found." });
+    }
+
+    // Delete the associated user
+    if (parent.user) {
+      await User.findByIdAndDelete(parent.user);
+    }
+
+    // Delete the parent
+    await Parent.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Parent deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 module.exports = {
   createParent,
   getParentChildren,
   getAllParents,
+  getParentById,
+  updateParent,
+  deleteParent,
 };

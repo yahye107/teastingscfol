@@ -9,39 +9,34 @@ import {
   callGetAllHallsApi,
   callGetAllsubjectssApi,
 } from "@/service/service";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import CommonForm from "@/components/common/CommonForm";
-import { TimetableFormControls } from "@/config";
+
 import { toast } from "sonner";
 import {
-  PencilIcon,
-  TrashIcon,
-  CalendarDaysIcon,
-  Table2Icon,
-  SearchIcon,
-  XIcon,
+  Pencil,
+  Trash,
+  CalendarDays,
+  Table2,
+  Search,
+  X,
   ArrowLeft,
+  Clock,
+  Users,
+  BookOpen,
+  Building,
+  Filter,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useNetworkApi } from "@/components/common/useNetworkApi";
 import GlobalLoader from "@/components/common/GlobalLoader";
-const timetableSchema = z
-  .object({
-    teacherId: z.string().min(1, "Teacher is required"),
-    classId: z.string().min(1, "Class is required"),
-    subjectId: z.string().min(1, "Subject is required"),
-    hallId: z.string().min(1, "Hall is required"),
-    day: z.string().min(1, "Day is required"),
-    periodStart: z.string().min(1, "Start time is required"),
-    periodEnd: z.string().min(1, "End time is required"),
-  })
-  .refine((data) => data.periodStart < data.periodEnd, {
-    message: "End time must be after start time",
-    path: ["periodEnd"],
-  });
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import SearchableSelect from "@/components/common/SearchableSelect";
 
 const TeacherTimetable = () => {
   const [teachers, setTeachers] = useState([]);
@@ -58,13 +53,24 @@ const TeacherTimetable = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [today, setToday] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(3);
+  const [visibleCount, setVisibleCount] = useState(6);
   const [filters, setFilters] = useState({
     day: "",
     class: "",
     subject: "",
   });
+  const [formData, setFormData] = useState({
+    classId: "",
+    subjectId: "",
+    hallId: "",
+    day: "",
+    periodStart: "",
+    periodEnd: "",
+  });
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const daysOfWeek = [
     "Monday",
@@ -76,20 +82,7 @@ const TeacherTimetable = () => {
     "Sunday",
   ];
   const hasMore = visibleCount < filteredTeachers.length;
-  const hasLess = visibleCount > 3;
-
-  const form = useForm({
-    resolver: zodResolver(timetableSchema),
-    defaultValues: {
-      teacherId: "",
-      classId: "",
-      subjectId: "",
-      hallId: "",
-      day: "",
-      periodStart: "",
-      periodEnd: "",
-    },
-  });
+  const hasLess = visibleCount > 6;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,14 +116,12 @@ const TeacherTimetable = () => {
       setIsLoading(true);
       try {
         if (viewMode === "weekly") {
-          const weekly = await callGetTeacherWeeklyTimetableApi(
-            selectedTeacherId
-          );
+          const weekly =
+            await callGetTeacherWeeklyTimetableApi(selectedTeacherId);
           setWeeklyTimetable(weekly || []);
         } else {
-          const todayRes = await callGetTeacherTodayTimetableApi(
-            selectedTeacherId
-          );
+          const todayRes =
+            await callGetTeacherTodayTimetableApi(selectedTeacherId);
           setTodayTimetable(todayRes?.periods || []);
           setToday(todayRes?.day || "");
         }
@@ -187,20 +178,27 @@ const TeacherTimetable = () => {
   const handleTeacherSelect = (id) => {
     setSelectedTeacherId(id);
     setEditingId(null);
-    form.reset();
+    setFormData({
+      classId: "",
+      subjectId: "",
+      hallId: "",
+      day: "",
+      periodStart: "",
+      periodEnd: "",
+    });
   };
 
   const handleEdit = (entry) => {
-    form.reset({
-      teacherId: selectedTeacherId,
-      classId: entry.class?._id,
-      subjectId: entry.subject?._id,
-      hallId: entry.hall?._id,
-      day: entry.day,
-      periodStart: entry.startTime,
-      periodEnd: entry.endTime,
+    setFormData({
+      classId: entry.class?._id || "",
+      subjectId: entry.subject?._id || "",
+      hallId: entry.hall?._id || "",
+      day: entry.day || "",
+      periodStart: entry.startTime || "",
+      periodEnd: entry.endTime || "",
     });
     setEditingId(entry._id);
+    setIsEditDialogOpen(true);
   };
 
   const confirmDelete = (id) => {
@@ -211,492 +209,720 @@ const TeacherTimetable = () => {
   const handleDelete = async () => {
     if (!entryToDelete || !selectedTeacherId) return;
 
+    setLoading(true);
     try {
       await callDeleteTimetableApi(selectedTeacherId, entryToDelete);
       toast.success("Timetable entry deleted successfully");
 
-      const updatedTimetable = await callGetTeacherWeeklyTimetableApi(
-        selectedTeacherId
-      );
+      const updatedTimetable =
+        await callGetTeacherWeeklyTimetableApi(selectedTeacherId);
       setWeeklyTimetable(updatedTimetable || []);
     } catch (err) {
       toast.error("Failed to delete timetable entry");
     } finally {
+      setLoading(false);
       setIsDeleteDialogOpen(false);
       setEntryToDelete(null);
     }
   };
 
-  const handleSubmit = async (data) => {
-    try {
-      if (editingId) {
-        const updates = {
-          class: data.classId,
-          subject: data.subjectId,
-          hall: data.hallId,
-          day: data.day,
-          startTime: data.periodStart,
-          endTime: data.periodEnd,
-        };
+  const handleUpdate = async () => {
+    if (!editingId || !selectedTeacherId) return;
 
-        await callUpdateTimetableApi(editingId, updates);
-        toast.success("Timetable updated successfully");
-      }
+    setLoading(true);
+    try {
+      const updates = {
+        class: formData.classId,
+        subject: formData.subjectId,
+        hall: formData.hallId,
+        day: formData.day,
+        startTime: formData.periodStart,
+        endTime: formData.periodEnd,
+      };
+
+      await callUpdateTimetableApi(editingId, updates);
+      toast.success("Timetable updated successfully");
 
       const updatedData =
-        viewMode === "weekly"
-          ? await callGetTeacherWeeklyTimetableApi(selectedTeacherId)
-          : await callGetTeacherTodayTimetableApi(selectedTeacherId);
+        await callGetTeacherWeeklyTimetableApi(selectedTeacherId);
+      setWeeklyTimetable(updatedData || []);
 
-      if (viewMode === "weekly") {
-        setWeeklyTimetable(updatedData || []);
-      } else {
-        setTodayTimetable(updatedData?.periods || []);
-      }
-
-      form.reset();
+      setIsEditDialogOpen(false);
       setEditingId(null);
+      setFormData({
+        classId: "",
+        subjectId: "",
+        hallId: "",
+        day: "",
+        periodStart: "",
+        periodEnd: "",
+      });
     } catch (err) {
       toast.error("Failed to update timetable");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const enhancedFormControls = TimetableFormControls.map((control) => {
-    if (control.id === "teacherId") {
-      return {
-        ...control,
-        options: teachers.map((t) => ({
-          label: t.user?.fullName,
-          value: t._id,
-        })),
-      };
-    }
-    if (control.id === "classId") {
-      return {
-        ...control,
-        options: classes.map((cls) => ({
-          label: cls.name,
-          value: cls._id,
-        })),
-      };
-    }
-    if (control.id === "subjectId") {
-      return {
-        ...control,
-        options: subjects.map((subject) => ({
-          label: subject.name,
-          value: subject._id,
-        })),
-      };
-    }
-    if (control.id === "hallId") {
-      return {
-        ...control,
-        options: halls.map((hall) => ({
-          label: hall.hallNumber,
-          value: hall._id,
-        })),
-      };
-    }
-    return control;
-  });
+  const getSelectedTeacher = () => {
+    return teachers.find((t) => t._id === selectedTeacherId);
+  };
+  const subjectOptions = subjects.map((s) => ({ label: s.name, value: s._id }));
+  const classOptions = classes.map((c) => ({
+    label: `Grade ${c.name}`,
+    value: c._id,
+  }));
+  const hallOptions = halls.map((h) => ({
+    label: `Hall ${h.hallNumber}`,
+    value: h._id,
+  }));
+  const dayOptions = daysOfWeek.map((d) => ({ label: d, value: d }));
 
   const FilterControls = () => (
-    <div className="flex flex-col md:flex-row gap-3 mb-4">
-      {viewMode === "weekly" && (
-        <select
-          value={filters.day}
-          onChange={(e) => handleFilterChange("day", e.target.value)}
-          className="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Days</option>
-          {daysOfWeek.map((day) => (
-            <option key={day} value={day}>
-              {day}
-            </option>
-          ))}
-        </select>
-      )}
+    <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg p-4 border border-gray-200 mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Filter className="h-4 w-4 text-gray-600" />
+        <h3 className="text-sm font-medium text-gray-700">Filter Timetable</h3>
+      </div>
+      <div className="flex flex-col md:flex-row gap-3">
+        {viewMode === "weekly" && (
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Day
+            </label>
+            <SearchableSelect
+              options={[{ label: "All Days", value: "" }, ...dayOptions]}
+              value={filters.day}
+              onChange={(val) => handleFilterChange("day", val)}
+              placeholder="All Days"
+            />
+          </div>
+        )}
 
-      <select
-        value={filters.class}
-        onChange={(e) => handleFilterChange("class", e.target.value)}
-        className="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">All Classes</option>
-        {classes.map((cls) => (
-          <option key={cls._id} value={cls._id}>
-            Grade {cls.name}
-          </option>
-        ))}
-      </select>
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Class
+          </label>
+          <SearchableSelect
+            options={[{ label: "All Classes", value: "" }, ...classOptions]}
+            value={filters.class}
+            onChange={(val) => handleFilterChange("class", val)}
+            placeholder="All Classes"
+          />
+        </div>
 
-      <select
-        value={filters.subject}
-        onChange={(e) => handleFilterChange("subject", e.target.value)}
-        className="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">All Subjects</option>
-        {subjects.map((subject) => (
-          <option key={subject._id} value={subject._id}>
-            {subject.name}
-          </option>
-        ))}
-      </select>
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Subject
+          </label>
+          <SearchableSelect
+            options={[{ label: "All Subjects", value: "" }, ...subjectOptions]}
+            value={filters.subject}
+            onChange={(val) => handleFilterChange("subject", val)}
+            placeholder="All Subjects"
+          />
+        </div>
+      </div>
     </div>
   );
+
   if (isLoading) return <GlobalLoader />;
+
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 text-black p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 space-y-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Teacher Timetable
-          </h1>
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="gap-2 text-black"
-          >
-            <ArrowLeft className="h-4 w-4 text-black" />
-            Back to Teachers
-          </Button>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="h-5 w-5 text-gray-400" />
+        {/* Header Section */}
+        <div className="mb-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                Teacher Timetable
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Manage and view teacher schedules efficiently
+              </p>
             </div>
-            <input
-              type="text"
-              placeholder="Search teachers..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => handleSearch("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                aria-label="Clear search"
-              >
-                <XIcon className="h-5 w-5 text-gray-400 hover:text-gray-500" />
-              </button>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Teachers
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredTeachers.slice(0, visibleCount).map((teacher) => (
-              <div
-                key={teacher._id}
-                onClick={() => handleTeacherSelect(teacher._id)}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedTeacherId === teacher._id
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
-                }`}
-              >
-                <h3 className="font-medium text-gray-900 truncate">
-                  {teacher.user?.fullName}
-                </h3>
-                <p className="text-sm text-gray-500 truncate">
-                  {teacher.subject?.name}
-                </p>
+          {/* Search Section */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
-            ))}
-          </div>
+              <input
+                type="text"
+                placeholder="Search teachers by name..."
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch("")}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  aria-label="Clear search"
+                >
+                  <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
+            </div>
 
-          <div className="mt-6 flex justify-center gap-4">
-            {hasMore && (
-              <button
-                onClick={() => setVisibleCount((prev) => prev + 4)}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-              >
-                Show More
-              </button>
-            )}
-            {hasLess && (
-              <button
-                onClick={() => setVisibleCount(3)}
-                className="px-4 py-2 rounded-md bg-gray-200 text-gray-800 font-medium hover:bg-gray-300 transition"
-              >
-                Show Less
-              </button>
-            )}
-          </div>
-        </div>
+            {/* Teachers Grid */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Select Teacher
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredTeachers.slice(0, visibleCount).map((teacher) => (
+                  <div
+                    key={teacher._id}
+                    onClick={() => handleTeacherSelect(teacher._id)}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                      selectedTeacherId === teacher._id
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
+                    }`}
+                  >
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {teacher.user?.fullName}
+                    </h3>
+                  </div>
+                ))}
+              </div>
 
-        <div className="mb-6 space-y-4">
-          <div className="border-b border-gray-200">
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setViewMode("daily")}
-                className={`pb-2 px-1 transition-colors ${
-                  viewMode === "daily"
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <CalendarDaysIcon className="inline mr-2 h-5 w-5" />
-                Daily View
-              </button>
-              <button
-                onClick={() => setViewMode("weekly")}
-                className={`pb-2 px-1 transition-colors ${
-                  viewMode === "weekly"
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Table2Icon className="inline mr-2 h-5 w-5" />
-                Weekly View
-              </button>
+              {/* Show More/Less Buttons */}
+              <div className="mt-6 flex justify-center gap-3">
+                {hasMore && (
+                  <Button
+                    onClick={() => setVisibleCount((prev) => prev + 6)}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    Show More Teachers
+                  </Button>
+                )}
+                {hasLess && (
+                  <Button
+                    onClick={() => setVisibleCount(6)}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    Show Less
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-
-          {selectedTeacherId && <FilterControls />}
         </div>
 
-        {selectedTeacherId ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="hidden md:block max-h-[500px] overflow-y-auto border-t border-gray-200">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {viewMode === "weekly" && (
-                      <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                        Day
-                      </th>
-                    )}
-                    <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                      Time
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                      Class
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                      Subject
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                      Hall
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-gray-900">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={6} className="p-4 text-center">
-                        <div className="animate-pulse flex space-x-4">
-                          <div className="flex-1 space-y-4 py-1">
-                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : viewMode === "weekly" ? (
-                    Object.entries(filteredWeeklyTimetable).map(
-                      ([day, entries]) =>
-                        entries.map((entry) => (
-                          <tr key={entry._id} className="hover:bg-gray-50">
-                            <td className="p-4 font-medium text-sm text-gray-900">
-                              {day}
+        {/* Timetable Section */}
+        {selectedTeacherId && (
+          <div className="space-y-6">
+            {/* View Mode Tabs and Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {getSelectedTeacher()?.user?.fullName}'s Timetable
+                  </h2>
+                  <p className="text-gray-600 text-sm">
+                    {viewMode === "weekly"
+                      ? "Weekly Schedule"
+                      : "Today's Schedule"}
+                  </p>
+                </div>
+
+                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                  <Button
+                    onClick={() => setViewMode("daily")}
+                    variant={viewMode === "daily" ? "default" : "ghost"}
+                    className={`gap-2 ${
+                      viewMode === "daily" ? "shadow-sm" : "text-gray-600"
+                    }`}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    Daily View
+                  </Button>
+                  <Button
+                    onClick={() => setViewMode("weekly")}
+                    variant={viewMode === "weekly" ? "default" : "ghost"}
+                    className={`gap-2 ${
+                      viewMode === "weekly" ? "shadow-sm" : "text-gray-600"
+                    }`}
+                  >
+                    <Table2 className="h-4 w-4" />
+                    Weekly View
+                  </Button>
+                </div>
+              </div>
+
+              <FilterControls />
+            </div>
+
+            {/* Timetable Display */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              {/* Desktop Table View */}
+              <div className="hidden lg:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-gray-50 to-blue-50/50">
+                      <tr>
+                        {viewMode === "weekly" && (
+                          <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                            Day
+                          </th>
+                        )}
+                        <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                          Time
+                        </th>
+                        <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                          Class
+                        </th>
+                        <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                          Subject
+                        </th>
+                        <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                          Hall
+                        </th>
+                        <th className="p-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {isLoading ? (
+                        <tr>
+                          <td
+                            colSpan={viewMode === "weekly" ? 6 : 5}
+                            className="p-8 text-center"
+                          >
+                            <div className="flex justify-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            </div>
+                            <p className="text-gray-500 mt-2">
+                              Loading timetable...
+                            </p>
+                          </td>
+                        </tr>
+                      ) : viewMode === "weekly" ? (
+                        Object.entries(filteredWeeklyTimetable).length > 0 ? (
+                          Object.entries(filteredWeeklyTimetable).map(
+                            ([day, entries]) =>
+                              entries.map((entry, index) => (
+                                <tr
+                                  key={entry._id}
+                                  className="hover:bg-gray-50/80 transition-colors"
+                                >
+                                  {index === 0 && (
+                                    <td
+                                      rowSpan={entries.length}
+                                      className="p-4 font-semibold text-gray-900 align-top"
+                                    >
+                                      {day}
+                                    </td>
+                                  )}
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                                      <Clock className="h-3 w-3" />
+                                      {entry.startTime} - {entry.endTime}
+                                    </div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-gray-400" />
+                                      <span className="font-medium text-gray-900">
+                                        Grade {entry.class?.name}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      <BookOpen className="h-4 w-4 text-gray-400" />
+                                      <span className="text-gray-900">
+                                        {entry.subject?.name}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      <Building className="h-4 w-4 text-gray-400" />
+                                      <span className="text-gray-900">
+                                        Hall {entry.hall?.hallNumber}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex gap-2">
+                                      <Button
+                                        onClick={() => handleEdit(entry)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1 hover:bg-blue-50 hover:text-blue-700"
+                                      >
+                                        <Pencil className="h-3 w-3" />
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        onClick={() => confirmDelete(entry._id)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1 hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200"
+                                      >
+                                        <Trash className="h-3 w-3" />
+                                        Delete
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                          )
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="p-8 text-center">
+                              <div className="text-gray-500">
+                                <Table2 className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                <p>No timetable entries found</p>
+                                <p className="text-sm">
+                                  Try adjusting your filters
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      ) : filteredTodayTimetable.length > 0 ? (
+                        filteredTodayTimetable.map((entry) => (
+                          <tr
+                            key={entry._id}
+                            className="hover:bg-gray-50/80 transition-colors"
+                          >
+                            <td className="p-4">
+                              <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                                <Clock className="h-3 w-3" />
+                                {entry.startTime} - {entry.endTime}
+                              </div>
                             </td>
                             <td className="p-4">
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                                {entry.startTime} - {entry.endTime}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-gray-400" />
+                                <span className="font-medium text-gray-900">
+                                  Grade {entry.class?.name}
+                                </span>
+                              </div>
                             </td>
-                            <td className="p-4 text-sm text-gray-900">
-                              Grade {entry.class?.name}
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900">
+                                  {entry.subject?.name}
+                                </span>
+                              </div>
                             </td>
-                            <td className="p-4 text-sm text-gray-900">
-                              {entry.subject?.name}
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900">
+                                  Hall {entry.hall?.hallNumber}
+                                </span>
+                              </div>
                             </td>
-                            <td className="p-4 text-sm text-gray-900">
-                              {entry.hall?.hallNumber}
-                            </td>
-                            <td className="p-4 flex gap-2">
-                              <button
-                                onClick={() => handleEdit(entry)}
-                                className="p-2 hover:bg-gray-100 rounded"
-                                aria-label="Edit entry"
-                              >
-                                <PencilIcon className="w-4 h-4 text-blue-500" />
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(entry._id)}
-                                className="p-2 hover:bg-gray-100 rounded"
-                                aria-label="Delete entry"
-                              >
-                                <TrashIcon className="w-4 h-4 text-red-500" />
-                              </button>
+                            <td className="p-4">
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleEdit(entry)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1 hover:bg-blue-50 hover:text-blue-700"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  onClick={() => confirmDelete(entry._id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1 hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200"
+                                >
+                                  <Trash className="h-3 w-3" />
+                                  Delete
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))
-                    )
-                  ) : filteredTodayTimetable.length > 0 ? (
-                    filteredTodayTimetable.map((entry) => (
-                      <tr key={entry._id} className="hover:bg-gray-50">
-                        <td className="p-4">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                            {entry.startTime} - {entry.endTime}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm text-gray-900">
-                          Grade {entry.class?.name}
-                        </td>
-                        <td className="p-4 text-sm text-gray-900">
-                          {entry.subject?.name}
-                        </td>
-                        <td className="p-4 text-sm text-gray-900">
-                          {entry.hall?.hallNumber}
-                        </td>
-                        <td className="p-4 flex gap-2">
-                          <button
-                            onClick={() => handleEdit(entry)}
-                            className="p-2 hover:bg-gray-100 rounded"
-                            aria-label="Edit entry"
-                          >
-                            <PencilIcon className="w-4 h-4 text-blue-500" />
-                          </button>
-                          <button
-                            onClick={() => confirmDelete(entry._id)}
-                            className="p-2 hover:bg-gray-100 rounded"
-                            aria-label="Delete entry"
-                          >
-                            <TrashIcon className="w-4 h-4 text-red-500" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="p-4 text-center text-gray-500">
-                        No matching entries found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="md:hidden space-y-3 p-3">
-              {(viewMode === "weekly"
-                ? Object.values(filteredWeeklyTimetable).flat()
-                : filteredTodayTimetable
-              ).map((entry) => (
-                <div
-                  key={entry._id}
-                  className="p-3 border rounded-lg bg-white shadow-xs"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      {viewMode === "weekly" && (
-                        <span className="text-sm font-medium text-gray-900">
-                          {entry.day}
-                        </span>
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="p-8 text-center">
+                            <div className="text-gray-500">
+                              <CalendarDays className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                              <p>No schedule for today</p>
+                              <p className="text-sm">
+                                Try checking the weekly view
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                      <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1">
-                        {entry.startTime} - {entry.endTime}
-                      </p>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleEdit(entry)}
-                        className="p-1.5 hover:bg-gray-100 rounded"
-                        aria-label="Edit entry"
-                      >
-                        <PencilIcon className="w-4 h-4 text-blue-500" />
-                      </button>
-                      <button
-                        onClick={() => confirmDelete(entry._id)}
-                        className="p-1.5 hover:bg-gray-100 rounded"
-                        aria-label="Delete entry"
-                      >
-                        <TrashIcon className="w-4 h-4 text-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Class:</span>
-                      {entry.class?.name}
-                    </p>
-                    <p>
-                      <span className="font-medium">Subject:</span>{" "}
-                      {entry.subject?.name}
-                    </p>
-                    <p>
-                      <span className="font-medium">Hall:</span>{" "}
-                      {entry.hall?.hallNumber}
-                    </p>
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
-              ))}
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4 p-4">
+                {(viewMode === "weekly"
+                  ? Object.values(filteredWeeklyTimetable).flat()
+                  : filteredTodayTimetable
+                ).map((entry) => (
+                  <div
+                    key={entry._id}
+                    className="p-4 border border-gray-200 rounded-xl bg-white shadow-xs hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="space-y-1">
+                        {viewMode === "weekly" && (
+                          <span className="text-sm font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                            {entry.day}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-sm">
+                          <Clock className="h-3 w-3" />
+                          {entry.startTime} - {entry.endTime}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => handleEdit(entry)}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          onClick={() => confirmDelete(entry._id)}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">Class:</span>
+                        <span>Grade {entry.class?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">Subject:</span>
+                        <span>{entry.subject?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">Hall:</span>
+                        <span>{entry.hall?.hallNumber}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="text-center p-8 text-gray-500">
-            Select a teacher to view timetable
           </div>
         )}
 
-        {editingId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold">Edit Schedule</h3>
-                <button
-                  onClick={() => setEditingId(null)}
-                  className="p-1 hover:bg-gray-100 rounded-full"
-                  aria-label="Close modal"
-                >
-                  <XIcon className="w-6 h-6 text-gray-500" />
-                </button>
-              </div>
-              <CommonForm
-                formControls={enhancedFormControls}
-                form={form}
-                handleSubmit={form.handleSubmit(handleSubmit)}
-                btnText="Update Schedule"
-                gridLayout="grid grid-cols-1 md:grid-cols-2 gap-4"
-              />
-            </div>
-          </div>
-        )}
-
-        {isDeleteDialogOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-full">
-                  <TrashIcon className="w-6 h-6 text-red-500" />
-                </div>
-                <h3 className="text-lg font-semibold">Delete Schedule</h3>
-              </div>
-              <p className="text-gray-600">
-                Are you sure you want to delete this schedule entry? This action
-                cannot be undone.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg transition-colors"
-                >
-                  Delete Entry
-                </button>
-              </div>
-            </div>
+        {/* No Teacher Selected State */}
+        {!selectedTeacherId && (
+          <div className="text-center p-12 bg-white rounded-xl shadow-sm border border-gray-200">
+            <Table2 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No Teacher Selected
+            </h3>
+            <p className="text-gray-600 max-w-md mx-auto">
+              Select a teacher from the list above to view and manage their
+              timetable schedule.
+            </p>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash className="h-5 w-5 text-red-600" />
+              Delete Schedule Entry
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently remove this
+              schedule entry from the teacher's timetable.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={loading}
+              className="gap-2"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Trash className="h-4 w-4" />
+              )}
+              Delete Entry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Schedule Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-600" />
+              Edit Schedule Entry
+            </DialogTitle>
+            <DialogDescription>
+              Update the schedule details for this timetable entry.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Day</label>
+                <SearchableSelect
+                  options={subjectOptions}
+                  value={formData.subjectId}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, subjectId: val }))
+                  }
+                  placeholder="Select Subject"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Class
+                </label>
+                <SearchableSelect
+                  options={classOptions}
+                  value={formData.classId}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, classId: val }))
+                  }
+                  placeholder="Select Class"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Subject
+                </label>
+                <SearchableSelect
+                  options={hallOptions}
+                  value={formData.hallId}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, hallId: val }))
+                  }
+                  placeholder="Select Hall"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Hall
+                </label>
+                <SearchableSelect
+                  options={dayOptions}
+                  value={formData.day}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, day: val }))
+                  }
+                  placeholder="Select Day"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  value={formData.periodStart}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      periodStart: e.target.value,
+                    }))
+                  }
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  End Time
+                </label>
+                <input
+                  type="time"
+                  value={formData.periodEnd}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      periodEnd: e.target.value,
+                    }))
+                  }
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={loading} className="gap-2">
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Pencil className="h-4 w-4" />
+              )}
+              Update Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

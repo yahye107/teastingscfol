@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["active", "pending", "blocked"],
+    enum: ["active", "pending", "blocked", "nonActive"],
     default: "active",
   },
   teacherProfile: {

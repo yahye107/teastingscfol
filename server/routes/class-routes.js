@@ -80,6 +80,7 @@ const {
   getClassResultsOverview,
   updateResultForStudent,
   getRegisteredAcademicYears,
+  updateStudentResult,
 } = require("../controller/resultcontroll");
 router.post("/results/:teacherId", submitResultsForClassSubject);
 router.put("/results/:resultId", updateResultForStudent);
@@ -88,6 +89,7 @@ router.get("/results/academicyear", getRegisteredAcademicYears);
 router.get("/results", getResultsByClassSubjectYear); // uses query params
 router.put("/bulk", bulkUpdateResults); // bulk update
 router.get("/ResultMark/:classId", getClassResultsOverview);
+router.put("/update/:resultId", updateStudentResult);
 // ================== Student Attendance ==================
 const {
   markStudentAttendance,

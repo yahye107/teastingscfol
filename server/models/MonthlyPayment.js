@@ -13,7 +13,7 @@ const monthlyPaymentSchema = new mongoose.Schema(
     },
     year: {
       type: Number,
-      required: true,
+      default: new Date().getFullYear(),
     },
     academicYear: {
       type: String,
@@ -49,8 +49,8 @@ const monthlyPaymentSchema = new mongoose.Schema(
     // ✅ NEW FIELDS
     method: {
       type: String,
-      enum: ["Cash", "Bank Transfer", "Mobile Money", "Scholarship", "Other"],
-      default: "Cash",
+      enum: ["Cash", "Bank Transfer", "Avc +", "Scholarship", "Other"],
+      default: "Avc +",
     },
     sentBy: {
       type: String,

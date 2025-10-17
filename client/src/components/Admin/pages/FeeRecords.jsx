@@ -58,7 +58,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
+import ButtonLoader from "@/components/common/ButtonLoadi";
 
 // Updated payment schema
 const paymentSchema = z.object({
@@ -67,15 +68,15 @@ const paymentSchema = z.object({
     .min(1, "Amount is required")
     .pipe(z.coerce.number().min(0.01, "Amount must be at least 0.01")),
   sentBy: z.string().min(1, "Sent by is required"),
-  method: z.enum(["Cash", "Bank Transfer", "Mobile Money", "Check", "Other"]),
+  method: z.enum(["Cash", "Bank Transfer", "Avc +", "Check", "Other"]),
   note: z.string().optional(),
   date: z.string().min(1, "Payment date is required"),
   dueDate: z.string().optional(),
   academicYear: z.string().min(1, "Academic year is required"),
-  year: z
-    .string()
-    .min(1, "Year is required")
-    .pipe(z.coerce.number().min(2000, "Year must be after 2000")),
+  // year: z
+  //   .string()
+  //   .min(1, "Year is required")
+  //   .pipe(z.coerce.number().min(2000, "Year must be after 2000")),
   month: z.enum([
     "January",
     "February",
@@ -109,7 +110,7 @@ const FeeRecords = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [editablePayments, setEditablePayments] = useState({});
-
+  const [updateLoading, setUpdateLoading] = useState(false);
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [filterYear, setFilterYear] = useState("all");
@@ -123,12 +124,12 @@ const FeeRecords = () => {
     defaultValues: {
       amount: "",
       sentBy: "",
-      method: "Cash",
+      method: "Avc +",
       note: "",
       date: new Date().toISOString().slice(0, 10),
       dueDate: "",
       academicYear: "",
-      year: new Date().getFullYear().toString(),
+      // year: new Date().getFullYear().toString(),
       month: "January",
       status: "Paid",
     },
@@ -203,16 +204,18 @@ const FeeRecords = () => {
         const term = searchTerm.toLowerCase();
         const matches = [
           payment.month?.toLowerCase(),
-          payment.year?.toString(),
+          // payment.year?.toString(),
           payment.academicYear?.toLowerCase(),
           payment.method?.toLowerCase(),
           payment.sentBy?.toLowerCase(),
           payment.note?.toLowerCase(),
           payment.status?.toLowerCase(),
           payment.debt?.toString(),
-          payment.date ? format(new Date(payment.date), "MM/dd/yyyy") : "",
+          payment.date
+            ? format(new Date(payment.date), "MMM dd, yyyy").toLowerCase()
+            : "",
           payment.dueDate
-            ? format(new Date(payment.dueDate), "MM/dd/yyyy")
+            ? format(new Date(payment.dueDate), "MMM dd, yyyy").toLowerCase()
             : "",
         ].some((value) => value?.includes(term));
 
@@ -317,7 +320,7 @@ const FeeRecords = () => {
       const payload = {
         student: selectedStudent._id,
         amount: Number(data.amount),
-        year: Number(data.year),
+        // year: Number(data.year),
         month: data.month,
         academicYear: data.academicYear,
         date: data.date,
@@ -352,7 +355,7 @@ const FeeRecords = () => {
         ...editablePayments,
         [paymentId]: {
           month: payment.month,
-          year: payment.year,
+          // year: payment.year,
           amount: payment.amount,
           method: payment.method,
           status: payment.status,
@@ -386,7 +389,7 @@ const FeeRecords = () => {
 
     const updatedFields = editablePayments[paymentId];
     if (!updatedFields) return;
-
+    setUpdateLoading(true);
     try {
       const updatedPayment = {
         ...payment,
@@ -395,9 +398,11 @@ const FeeRecords = () => {
 
       await callUpdatePaymentApi(paymentId, updatedPayment);
       toast.success("Payment updated successfully!");
+      setUpdateLoading(false);
       loadPayments(selectedStudent._id);
     } catch (err) {
       toast.error("Failed to update payment");
+
       console.error("Update error:", err);
     }
   };
@@ -435,7 +440,7 @@ const FeeRecords = () => {
 
     const headers = [
       "Month",
-      "Year",
+      // "Year",
       "Academic Year",
       "Amount",
       "Method",
@@ -448,7 +453,7 @@ const FeeRecords = () => {
 
     const rows = filteredPayments.map((pay) => [
       pay.month || "Unknown",
-      pay.year,
+      // pay.year,
       pay.academicYear,
       `$${pay.amount.toFixed(2)}`,
       pay.method,
@@ -557,9 +562,7 @@ const FeeRecords = () => {
                   form={form}
                   formControls={enhancedFormControls}
                   handleSubmit={handlePaymentSubmit}
-                  btnText="Submit Payment"
-                  submitLoading={isSubmitting || form.formState.isSubmitting}
-                  submitDisabled={isSubmitting || form.formState.isSubmitting}
+                  btnText={isSubmitting ? <ButtonLoader /> : "Add Payment"}
                   defaultValues={{
                     amount: selectedStudent.monthlyPayment?.toString() || "",
                   }}
@@ -615,7 +618,7 @@ const FeeRecords = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                  <SearchableSelect
+                  {/* <SearchableSelect
                     options={[
                       { label: "All Years", value: "all" },
                       ...Array.from({ length: 20 }, (_, i) => {
@@ -629,7 +632,7 @@ const FeeRecords = () => {
                     value={filterYear}
                     onChange={setFilterYear}
                     placeholder="Filter by Year"
-                  />
+                  /> */}
 
                   <SearchableSelect
                     options={[
@@ -674,7 +677,7 @@ const FeeRecords = () => {
                       ...[
                         "Cash",
                         "Bank Transfer",
-                        "Mobile Money",
+                        "Avc +",
                         "Check",
                         "Other",
                       ].map((method) => ({
@@ -769,7 +772,7 @@ const FeeRecords = () => {
                         <TableHeader className="bg-gray-50 dark:bg-gray-800">
                           <TableRow>
                             <TableHead>Month</TableHead>
-                            <TableHead>Year</TableHead>
+                            {/* <TableHead>Year</TableHead> */}
                             <TableHead>Academic Year</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Method</TableHead>
@@ -836,7 +839,7 @@ const FeeRecords = () => {
                                 )}
                               </TableCell>
 
-                              <TableCell>
+                              {/* <TableCell>
                                 {editingPaymentId === pay._id ? (
                                   <Input
                                     type="number"
@@ -856,7 +859,7 @@ const FeeRecords = () => {
                                 ) : (
                                   pay.year
                                 )}
-                              </TableCell>
+                              </TableCell> */}
 
                               <TableCell>
                                 {editingPaymentId === pay._id ? (
@@ -937,7 +940,7 @@ const FeeRecords = () => {
                                       {[
                                         "Cash",
                                         "Bank Transfer",
-                                        "Mobile Money",
+                                        "Avc +",
                                         "Check",
                                         "Other",
                                       ].map((method) => (
@@ -1050,8 +1053,16 @@ const FeeRecords = () => {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => saveEditedPayment(pay._id)}
+                                      className="bg-blue-600 text-white hover:bg-blue-700 flex items-center"
                                     >
-                                      <Save className="h-4 w-4 mr-1" /> Save
+                                      {updateLoading ? (
+                                        <ButtonLoader />
+                                      ) : (
+                                        <span className="flex items-center">
+                                          <Save className="h-4 w-4 mr-1" />
+                                          Save
+                                        </span>
+                                      )}
                                     </Button>
                                     <Button
                                       size="sm"

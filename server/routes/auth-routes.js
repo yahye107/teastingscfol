@@ -48,10 +48,12 @@ const {
   updateTeacherAttendance,
   getAllTeacherAttendance,
   getTeacherAttendanceById,
+  getTodayTeacherAttendance,
 } = require("../controller/attendenceTeacher");
 
 // Admin marks teacher attendance
 routes.post("/markTeacherAttendence", markTeacherAttendance);
+routes.get("/TeacherAttendenceTodey", getTodayTeacherAttendance);
 routes.put("/markTeacherAttendence/:id", updateTeacherAttendance);
 // Admin views all teacher attendance
 routes.get("/getTeacherAttendence", getAllTeacherAttendance);
@@ -63,11 +65,13 @@ const {
   deleteStudent,
   getAllStudents,
   makePayment,
+  getStudentById,
 } = require("../controller/stdent-controll");
 routes.post("/student", createStudent);
 routes.put("/Upstudent/:studentId", updateStudent);
 routes.delete("/Destudent/:studentId", deleteStudent);
 routes.get("/student/getAll", getAllStudents);
+routes.get("/student/getAll/:id", getStudentById);
 routes.post("/payStudents/:studentId", makePayment);
 
 ////parent
@@ -75,6 +79,9 @@ const {
   createParent,
   getParentChildren,
   getAllParents,
+  getParentById,
+  updateParent,
+  deleteParent,
 } = require("../controller/auth-prants");
 routes.post("/register", registerUser);
 routes.post("/login", loginUser);
@@ -85,9 +92,12 @@ routes.delete("/users/:id", deleteUser);
 routes.post("/users/:id/status", authVerification, updateUserStatus);
 //prant
 routes.post("/Parents", createParent);
+routes.delete("/Parents/:id", deleteParent);
+
 routes.get("/allparents", getAllParents);
 routes.get("/:parentId/children", getParentChildren);
-
+routes.get("/allparents/:id", getParentById);
+routes.put("/Parents/:id", updateParent);
 //hall
 routes.post("/hall", createHall);
 
@@ -114,11 +124,15 @@ const {
   getAllSubjects,
   getSubjectById,
   updateSubject,
+  assignSubjectsToTeacher,
   deleteSubject,
+  removeSubjectsFromTeacher,
 } = require("../controller/subject-controll");
 
 // Subject routes
 routes.post("/subjects", createSubject);
+routes.post("/subjects/addSubjects", assignSubjectsToTeacher);
+routes.delete("/subjects/deleteSubjects", removeSubjectsFromTeacher);
 routes.get("/subjects", getAllSubjects);
 routes.get("/subjects/:id", getSubjectById);
 routes.put("/subjects/:id", updateSubject);
@@ -212,3 +226,16 @@ routes.get("/payments/student/:id", getStudentPaymentsById);
 routes.get("/payments/class/:classId", getPaymentsByClassId);
 routes.put("/payments/update/:id", updatePayment);
 routes.delete("/payments/delete/:id", deletePayment);
+///////staff
+const {
+  createStaff,
+  getAllStaff,
+  getStaffById,
+  updateStaff,
+  deleteStaff,
+} = require("../controller/staffControll");
+routes.post("/staff", authVerification, createStaff);
+routes.get("/staff", authVerification, getAllStaff);
+routes.get("/staff/:id", authVerification, getStaffById);
+routes.put("/staff/:id", authVerification, updateStaff);
+routes.delete("/staff/:id", authVerification, deleteStaff);

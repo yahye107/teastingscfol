@@ -53,7 +53,7 @@ const SIDEBAR_ITEMS = [
       },
       { name: "Parents", href: "Parantsregister", icon: UserPlus },
       { name: "Teachers", href: "Tescher", icon: UserCheck },
-      { name: "Staff", href: "/admindash/users/staff", icon: UserCog },
+      { name: "Staff", href: "staff", icon: UserCog },
       { name: "Users", href: "usersinfo", icon: User },
     ],
   },
@@ -64,6 +64,11 @@ const SIDEBAR_ITEMS = [
     subItems: [
       { name: "Classes", href: "class", icon: Notebook },
       { name: "Subjects", href: "subjects", icon: BookOpen },
+      {
+        name: "AssignSubjects",
+        href: "assignSubjectsToTeacher",
+        icon: BookOpen,
+      },
       { name: "Halls", href: "Halls", icon: BookOpen },
       { name: "Timetable", href: "timeTable", icon: Clock },
     ],
@@ -99,7 +104,7 @@ const SIDEBAR_ITEMS = [
         href: "/admindash/reports",
       },
 
-      { name: "Teacher Attendence", href: "Tatendence", icon: GraduationCap },
+      { name: "Teacher Attendence", href: "teacher", icon: GraduationCap },
       { name: "Attendence Histroy", href: "Histroyattendence", icon: Clock },
     ],
   },
@@ -187,7 +192,7 @@ const Sidebar = ({ onItemClick }) => {
         isSidebarOpen ? "w-64" : "w-20"
       } transition-all duration-300 bg-white border-r border-gray-100 shadow-lg`}
     >
-      <div className="p-4 flex flex-col h-full">
+      <div className="p-4 flex flex-col h-full overflow-auto">
         {/* Toggle Menu Button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}

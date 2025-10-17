@@ -15,19 +15,23 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import GlobalLoader from "@/components/common/GlobalLoader";
+import { ArrowLeft } from "lucide-react";
+import ButtonLoader from "@/components/common/ButtonLoadi";
 
 const studentSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email"),
+  email: z.string().optional(), // required only if you use student emails
   dob: z.string().min(1, "DOB required"),
-  age: z.string().min(1, "Age required"),
-  gender: z.enum(["Male", "Female", "Other"]),
-  classId: z.string().min(1, "Class is required"),
+  gender: z.string().min(1, "select the gender"),
+  age: z.number().min(0, "Age is required"),
+  classId: z.string(),
   parentId: z.string().min(1, "Parent is required"),
-  contact: z.string().min(1),
-  emergencyContact: z.string().min(1),
-  address: z.string().min(1),
-  previousSchool: z.string().min(1),
+  contact: z.string().min(1, "Contact is required"),
+  emergencyContact: z.string().optional(),
+  address: z.string().min(1, "Address is required"),
+  previousSchool: z.string().optional(),
+  notes: z.string().optional(),
+  nationalId: z.string().optional(),
   monthlyPayment: z.union([
     z.number().min(0, "Must be positive"),
     z.string().transform((val) => parseFloat(val) || 0),
@@ -55,9 +59,36 @@ const RegStudents = () => {
       address: "",
       previousSchool: "",
       monthlyPayment: "",
+      nationalId: "",
+      notes: "",
     },
   });
+  const dob = form.watch("dob");
 
+  useEffect(() => {
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      form.setValue("age", age);
+    }
+  }, [dob, form]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -67,10 +98,12 @@ const RegStudents = () => {
         ]);
         setParents(parentsData.parents || []);
         setClasses(classesData.classrooms || []);
-        setIsLoading(false);
+        // setIsLoading(false);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setIsLoading(false);
+        console.error("Error fetching parents", err);
+        toast.error("Failed to load prantes data");
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -83,9 +116,12 @@ const RegStudents = () => {
       await callregisterStudetsApi(formData);
       toast.success("Student registered successfully!");
       form.reset();
-    } catch (error) {
-      toast.error("Registration failed. Please try again.");
-      console.error("Registration error:", error);
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        "Failed to register staff. Please try again.";
+      toast.error(message);
+      console.error("Error registering staff:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +154,7 @@ const RegStudents = () => {
   });
   if (isLoading) return <GlobalLoader />;
   return (
-    <div className="min-h-screen px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 px-4 py-8 sm:py-12">
       {/* Header Section */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         <div>
@@ -126,20 +162,18 @@ const RegStudents = () => {
             Student Registration
           </h2>
           <p className="text-sm md:text-base text-gray-600 mt-1">
-            Register new students with comprehensive academic details
+            Register new Student
           </p>
         </div>
 
         <div className="flex flex-col items-center md:items-end gap-2">
           <h2 className="text-lg font-medium text-blue-700">
-            View Student Records
+            View All The Students
           </h2>
           <Link to="/admin/dashboard/StudentInfo">
-            <Button
-              variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              Student Directory
+            <Button variant="outline" className="flex items-center gap-2">
+              {/* <ArrowLeft className="w-4 h-4" /> */}
+              Get All Students
             </Button>
           </Link>
         </div>
@@ -147,68 +181,31 @@ const RegStudents = () => {
 
       {/* Form Container */}
       <div className="flex justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 lg:p-10 space-y-8"
-        >
-          {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-6"
-            >
-              {[...Array(7)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-1/4 rounded-full" />
-                  <Skeleton className="h-10 rounded-xl" />
-                </div>
-              ))}
-              <Skeleton className="h-12 rounded-xl mt-4" />
-            </motion.div>
-          ) : (
-            <CommonForm
-              formControls={enhancedFormControls}
-              form={form}
-              handleSubmit={handleSubmit}
-              btnText={isSubmitting ? "Registering..." : "Register Student"}
-              className="space-y-6"
-              inputClassName="w-fullw-full rounded-lg md:rounded-xl border border-gray-300 bg-white px-4 py-2.5 md:py-3 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500 transition duration-150 ease-in-out"
-              labelClassName="block text-sm font-medium text-black"
-              errorClassName="text-red-500 text-xs mt-1"
-              buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-300 ease-in-out relative"
-              buttonProps={{
-                disabled: isSubmitting,
-                children: isSubmitting ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1 }}
-                    />
-                    <span>Registering...</span>
-                  </div>
-                ) : (
-                  "Register Student"
-                ),
-              }}
-              customLayout={{
-                grid: [
-                  ["fullName", "email"],
-                  ["dob", "age"],
-                  ["gender", "address"],
-                  ["classId"],
-                  ["monthlyPayment", "contact"],
-                  ["emergencyContact", "previousSchool"],
-                  ["parentId"],
-                ],
-                gridClassName: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                fullWidthFields: ["address"],
-              }}
-            />
-          )}
-        </motion.div>
+        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 lg:p-10 space-y-8">
+          <CommonForm
+            formControls={enhancedFormControls}
+            form={form}
+            handleSubmit={handleSubmit}
+            btnText={isSubmitting ? <ButtonLoader /> : "Register Student"}
+            className="space-y-6"
+            inputClassName="w-full rounded-lg md:rounded-xl border border-gray-300 bg-white px-4 py-2.5 md:py-3 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500"
+            labelClassName="block text-sm font-medium text-black"
+            // errorClassName="text-red-500 text-xs mt-1"
+            buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md"
+            customLayout={{
+              grid: [
+                ["fullName", "email"],
+                ["dob", "age"],
+                ["gender", "address"],
+                ["classId", "nationalId"],
+                ["monthlyPayment", "contact"],
+                ["emergencyContact", "previousSchool"],
+                ["parentId"],
+                ["notes"],
+              ],
+            }}
+          />
+        </div>
       </div>
     </div>
   );

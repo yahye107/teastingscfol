@@ -60,9 +60,6 @@ const getTeacherWeeklyTimetable = async (req, res) => {
       .populate("subject")
       .populate("hall");
 
-    if (!timetable || timetable.length === 0)
-      return res.status(404).json({ message: "No timetable found" });
-
     res.status(200).json(timetable);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -6,6 +6,7 @@ const teacherAttendanceSchema = new mongoose.Schema({
     ref: "Teacher",
     required: true,
   },
+  academicYear: { type: String, default: "" },
   date: { type: Date, default: Date.now },
   status: {
     type: String,

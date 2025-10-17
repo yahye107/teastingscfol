@@ -11,12 +11,14 @@ const createTeacher = async (req, res) => {
       email,
       gender,
       dob,
+      nationalId,
       age,
       contact,
       SalaryBymonth,
       address,
       qualification,
       experience,
+      notes,
       // employeeId,
 
       subjectIds,
@@ -24,7 +26,9 @@ const createTeacher = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser)
-      return res.status(400).json({ message: "Teacher already exists." });
+      return res
+        .status(400)
+        .json({ message: "Teacher's email already exists." });
     const baseUsername = fullName.split(" ")[0].toLowerCase();
     let username = baseUsername;
     const password = generateEasyPassword(username);
@@ -50,6 +54,8 @@ const createTeacher = async (req, res) => {
       address,
       qualifications: qualification, // map qualification to qualifications
       experience,
+      notes,
+      nationalId,
       subjects: subjectIds || [],
       timetable: null,
     });
@@ -85,7 +91,8 @@ const getTeacherById = async (req, res) => {
         path: "user",
         select: "fullName email role rawPassword", // Include only necessary user fields
       })
-      .populate("subjects");
+      .populate("subjects")
+      .populate("timetables");
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });
     res.status(200).json({
       message: "Teacher found.",
@@ -108,15 +115,32 @@ const updateTeacher = async (req, res) => {
       contact,
       SalaryBymonth,
       address,
-      age,
       qualification,
+      nationalId,
       experience,
-      // employeeId,
       subjectIds,
+      notes,
     } = req.body;
 
     const teacher = await Teacher.findById(id);
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+
+    // Calculate age if DOB is provided
+    let calculatedAge = teacher.age; // default to existing age
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      calculatedAge = today.getFullYear() - birthDate.getFullYear();
+
+      // Adjust if birthday hasn't occurred yet this year
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        calculatedAge--;
+      }
+    }
 
     // Update linked user
     if (fullName || email) {
@@ -133,9 +157,10 @@ const updateTeacher = async (req, res) => {
         address,
         qualification,
         SalaryBymonth,
-        age,
+        nationalId,
+        age: calculatedAge,
         experience,
-        // employeeId,
+        notes,
         subjects: subjectIds || [],
       },
       { new: true }
@@ -143,9 +168,10 @@ const updateTeacher = async (req, res) => {
       .populate("user")
       .populate("subjects");
 
-    res
-      .status(200)
-      .json({ message: "Teacher updated", teacher: updatedTeacher });
+    res.status(200).json({
+      message: "Teacher updated successfully",
+      teacher: updatedTeacher,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

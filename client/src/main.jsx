@@ -8,10 +8,12 @@ import { UserProvider } from "./useContaxt/UseContext";
 import { Suspense } from "react";
 import Loading from "./components/Admin/componeets/common/Loading";
 createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
-    <UserProvider>
-      <App />
-      <Toaster />
-    </UserProvider>
-  </BrowserRouter>
+  <StrictMode>
+    <BrowserRouter>
+      <UserProvider>
+        <App />
+        <Toaster />
+      </UserProvider>
+    </BrowserRouter>
+  </StrictMode>
 );

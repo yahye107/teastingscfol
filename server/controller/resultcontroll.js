@@ -53,7 +53,16 @@ const submitResultsForClassSubject = async (req, res) => {
       })
     );
 
-    await Result.insertMany(resultData);
+    const createdResults = await Result.insertMany(resultData);
+
+    // Push results into each student's `results` array
+    await Promise.all(
+      createdResults.map(async (result) => {
+        await Student.findByIdAndUpdate(result.student, {
+          $push: { results: result._id },
+        });
+      })
+    );
 
     res.status(201).json({
       message: "Results submitted successfully.",
@@ -78,7 +87,7 @@ const getStudentResults = async (req, res) => {
       .populate("subject", "name")
 
       .select(
-        "subject name academicYear attendanceRate firstExam midExam thirdExam finalExam activities total lastUpdatedBy createdBy updatedAt createdAt"
+        "_id subject name academicYear attendanceRate firstExam midExam thirdExam finalExam activities total lastUpdatedBy createdBy updatedAt createdAt"
       );
 
     const totalMarks = results.reduce((sum, r) => sum + parseFloat(r.total), 0);
@@ -86,6 +95,7 @@ const getStudentResults = async (req, res) => {
       results.length > 0 ? (totalMarks / results.length).toFixed(2) : "N/A";
 
     const formatted = results.map((r) => ({
+      id: r._id,
       subject: r.subject?.name || "Unknown",
       attendanceRate: r.attendanceRate,
       firstExam: r.firstExam,
@@ -530,6 +540,28 @@ const getRegisteredAcademicYears = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const updateStudentResult = async (req, res) => {
+  try {
+    const { resultId } = req.params;
+    const updateData = req.body;
+
+    const updatedResult = await Result.findByIdAndUpdate(resultId, updateData, {
+      new: true,
+    });
+
+    if (!updatedResult) {
+      return res.status(404).json({ message: "Result not found." });
+    }
+
+    res.status(200).json({
+      message: "Result updated successfully.",
+      result: updatedResult,
+    });
+  } catch (error) {
+    console.error("Error updating result:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 module.exports = {
   getClassResultsOverview,
@@ -539,4 +571,5 @@ module.exports = {
   bulkUpdateResults,
   updateResultForStudent,
   submitResultsForClassSubject,
+  updateStudentResult,
 };

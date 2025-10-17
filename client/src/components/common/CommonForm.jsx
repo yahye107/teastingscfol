@@ -1,13 +1,19 @@
 import React, { useState } from "react";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Input } from "../ui/input";
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import CommonButton from "./common-button";
 import {
   Command,
@@ -15,8 +21,8 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from "../ui/command"; // Add these imports
-import { Textarea } from "../ui/textarea";
+} from "@/components/ui/command"; // Add these imports
+import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash } from "lucide-react";
 
 function CommonForm({
@@ -26,22 +32,26 @@ function CommonForm({
   btnText,
   customLayout,
   className,
-  inputClassName = "bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-300 dark:border-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500",
-  labelClassName = "text-sm font-medium text-gray-700 dark:text-gray-300",
+  inputClassName = "bg-white p-5 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-300 dark:border-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500",
+  labelClassName = "text-sm mt-2 text-xl font-medium text-gray-700 dark:text-gray-300",
   errorClassName,
   buttonClassName,
+  iconClassName,
+  // gridClassName,
 }) {
   const renderField = (controlItem, fieldId) => {
     const [searchTerm, setSearchTerm] = useState("");
-
+    const error = form.formState.errors[controlItem.id];
     return (
       <FormField
         key={controlItem.id}
         control={form.control}
         name={controlItem.id}
         render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel className={labelClassName}>
+          <FormItem className="space-y-2 relative">
+            <FormLabel
+              className={`${labelClassName} !text-gray-700 dark:!text-gray-300 mt-2`}
+            >
               {controlItem.label}
             </FormLabel>
             {controlItem.componentType === "input" && (
@@ -50,7 +60,11 @@ function CommonForm({
                   (() => {
                     const IconComponent = customLayout.icons[fieldId];
                     return (
-                      <IconComponent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black" />
+                      <IconComponent
+                        className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black ${
+                          iconClassName || ""
+                        }`}
+                      />
                     );
                   })()}
                 <Input
@@ -70,21 +84,77 @@ function CommonForm({
               </div>
             )}
             {/* ////////////// */}
-            {controlItem.componentType === "file" && (
-              <Input
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    field.onChange(file);
-                    if (controlItem.onChange) {
-                      controlItem.onChange(file);
+
+            {/* {controlItem.componentType === "file" && (
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      field.onChange(file);
+                      if (controlItem.onChange) {
+                        controlItem.onChange(file);
+                      }
                     }
-                  }
-                }}
-                className={inputClassName}
-              />
+                  }}
+                  className={inputClassName}
+                />
+                {field.value && (
+                  <p className="text-sm text-gray-500">
+                    Selected: {field.value.name}
+                  </p>
+                )}
+              </div>
+            )} */}
+            {controlItem.componentType === "file" && (
+              <div className="space-y-3 flex flex-col items-center">
+                {/* Square Image Preview Box */}
+                <div
+                  className="w-32 h-32 border-2 border-dashed rounded-xl 
+        flex items-center justify-center 
+        border-gray-300 dark:border-gray-600 
+        bg-gray-50 dark:bg-gray-800/40 overflow-hidden"
+                >
+                  {field.value && field.value instanceof File ? (
+                    <img
+                      src={URL.createObjectURL(field.value)}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-500 dark:text-gray-400 text-center px-2">
+                      No Image
+                    </span>
+                  )}
+                </div>
+
+                {/* Upload Button */}
+                <label
+                  className="px-4 py-2 text-sm font-medium rounded-lg 
+      bg-indigo-600 text-white hover:bg-indigo-700 
+      cursor-pointer transition"
+                >
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        field.onChange(file);
+                        if (controlItem.onChange) {
+                          controlItem.onChange(file);
+                        }
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             )}
+
             {/* ////////// */}
             {controlItem.componentType === "textarea" && (
               <Textarea
@@ -263,7 +333,8 @@ function CommonForm({
                     loop={false} // prevents up/down arrow selection
                     // ideally, stop propagation too
                     onKeyDown={(e) => e.stopPropagation()} // prevent Radix Select keyboard handling
-                    className="rounded-lg border shadow-md"
+                    className=""
+                    // className="rounded-lg border shadow-md"
                   >
                     <CommandInput
                       placeholder={`Search ${controlItem.label}...`}
@@ -295,6 +366,61 @@ function CommonForm({
                 </SelectContent>
               </Select>
             )}
+            {controlItem.componentType === "search-selectImg" && (
+              <Select
+                value={field.value}
+                onValueChange={(val) => {
+                  field.onChange(val);
+                  if (controlItem.onChange) {
+                    controlItem.onChange(val);
+                  }
+                }}
+              >
+                <SelectTrigger className={inputClassName}>
+                  <SelectValue placeholder={controlItem.placeholder} />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 shadow-lg p-0">
+                  <Command
+                    shouldFilter={false}
+                    loop={false} // prevents up/down arrow selection
+                    // ideally, stop propagation too
+                    onKeyDown={(e) => e.stopPropagation()} // prevent Radix Select keyboard handling
+                    className=""
+                    // className="rounded-lg border shadow-md"
+                  >
+                    <CommandInput
+                      placeholder={`Search ${controlItem.label}...`}
+                      className="border-b"
+                      value={searchTerm}
+                      onValueChange={setSearchTerm}
+                    />
+                    {/* <CommandEmpty>No {controlItem.label} found.</CommandEmpty> */}
+                    <CommandGroup className="max-h-60 overflow-y-auto">
+                      {(controlItem.options ?? [])
+                        .filter((option) =>
+                          option.searchText
+                            ?.toLowerCase()
+                            .includes(searchTerm.toLowerCase())
+                        )
+                        .map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 px-4 py-2 flex items-center gap-2"
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                    </CommandGroup>
+                  </Command>
+                </SelectContent>
+              </Select>
+            )}
+            {error && (
+              <p className="absolute text-red-500 text-sm left-0 top-full mb-1">
+                {error.message}
+              </p>
+            )}
           </FormItem>
         )}
       />
@@ -306,7 +432,20 @@ function CommonForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} className={className}>
         {customLayout?.grid
           ? customLayout.grid.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-2 gap-4">
+              <div
+                key={rowIndex}
+                className={
+                  row.length === 1
+                    ? "grid grid-cols-1 gap-4"
+                    : row.length === 2
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                      : row.length === 3
+                        ? "grid grid-cols-2 md:grid-cols-3 gap-4"
+                        : row.length >= 4
+                          ? "grid grid-cols-2 md:grid-cols-4 gap-4"
+                          : "grid grid-cols-1 gap-4" // fallback
+                }
+              >
                 {row.map((fieldId) => {
                   const controlItem = formControls.find(
                     (c) => c.id === fieldId

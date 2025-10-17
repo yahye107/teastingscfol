@@ -79,7 +79,32 @@ export const callGetAllParentsApi = async () => {
   );
   return response.data;
 };
+// Delete a parent
+export const callDeleteParentApi = async (parentId) => {
+  const response = await axios.delete(
+    `http://localhost:5000/api/auth/Parents/${parentId}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
 
+export const callGetParentByIdApi = async (id) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/allparents/${id}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+// Update Parent
+export const callUpdateParentApi = async (id, formData) => {
+  const response = await axios.put(
+    `http://localhost:5000/api/auth/Parents/${id}`,
+    formData,
+    { withCredentials: true }
+  );
+  return response.data;
+};
 // Get children for a specific parent
 export const callGetParentChildrenApi = async (parentId) => {
   const response = await axios.get(
@@ -87,6 +112,51 @@ export const callGetParentChildrenApi = async (parentId) => {
     {
       withCredentials: true,
     }
+  );
+  return response.data;
+};
+// Create a staff
+export const callCreateStaffApi = async (formData) => {
+  const response = await axios.post(
+    "http://localhost:5000/api/auth/staff",
+    formData,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+// Get all staff
+export const callGetAllStaffApi = async () => {
+  const response = await axios.get("http://localhost:5000/api/auth/staff", {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+// Get a single staff by ID
+export const callGetStaffByIdApi = async (id) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/staff/${id}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+// Update staff info
+export const callUpdateStaffApi = async (id, formData) => {
+  const response = await axios.put(
+    `http://localhost:5000/api/auth/staff/${id}`,
+    formData,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+// Delete staff
+export const callDeleteStaffApi = async (id) => {
+  const response = await axios.delete(
+    `http://localhost:5000/api/auth/staff/${id}`,
+    { withCredentials: true }
   );
   return response.data;
 };
@@ -146,6 +216,20 @@ export const callGetAllStudentsApi = async () => {
   try {
     const response = await axios.get(
       "http://localhost:5000/api/auth/student/getAll",
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting all students:", error);
+    throw error;
+  }
+};
+export const callGetAllStudentsidbyApi = async (id) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:5000/api/auth/student/getAll/${id}`,
       {
         withCredentials: true,
       }
@@ -411,6 +495,44 @@ export const callDeleteSubjectApi = async (subjectId) => {
   );
   return response.data;
 };
+// Assign Subjects to Teacher
+// service.js - Fix the API call function
+export const callAssignSubjectsToTeacherApi = async (data) => {
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/auth/subjects/addSubjects",
+      data, // Send the entire data object
+      {
+        withCredentials: true,
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("API call error:", error);
+    throw error;
+  }
+};
+export const callRemoveSubjectsFromTeacherApi = async (data) => {
+  try {
+    const response = await axios.delete(
+      "http://localhost:5000/api/auth/subjects/deleteSubjects",
+      {
+        data, // For DELETE requests with body
+        withCredentials: true,
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Remove subjects API call error:", error);
+    throw error;
+  }
+};
 
 /////////////
 // Create or update a teacher's timetable
@@ -606,6 +728,13 @@ export const callMarkTeacherAttendanceApi = async (data) => {
   const response = await axios.post(
     `http://localhost:5000/api/auth/markTeacherAttendence`,
     data,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+export const callGetTodayTeacherAttendanceApi = async (data) => {
+  const response = await axios.get(
+    `http://localhost:5000/api/auth/TeacherAttendenceTodey`,
     { withCredentials: true }
   );
   return response.data;
@@ -917,6 +1046,22 @@ export const callUpdateResultForStudentApi = async (
     const errorMessage = error.response?.data?.error || error.message;
     console.error("API call failed:", errorMessage);
     throw new Error(errorMessage);
+  }
+};
+// In your service file
+export const updateStudentResultApi = async (resultId, data) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:5000/api/class/update/${resultId}`,
+      data,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating result:", error);
+    throw error.response?.data || error;
   }
 };
 

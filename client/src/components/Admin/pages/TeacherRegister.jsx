@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
 import CommonForm from "@/components/common/CommonForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -14,19 +13,22 @@ import {
   callGetAllsubjectssApi,
 } from "@/service/service";
 import GlobalLoader from "@/components/common/GlobalLoader";
+import ButtonLoader from "@/components/common/ButtonLoadi";
 
 const teacherSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email"),
+  email: z.string(),
   dob: z.string().min(1, "DOB required"),
-  age: z.string().min(1, "Age required"),
-  gender: z.enum(["Male", "Female", "Other"]),
+  age: z.number().min(0, "Age is required"),
+  gender: z.string().min(1, "select the gender"),
   contact: z.string().min(1, "Contact number is required"),
-  address: z.string().min(1, "Address is required"),
-  qualification: z.string().min(1, "Qualification is required"),
-  subjects: z.string().min(1, "Subject is required"), // Changed from array to string
-  experience: z.string().min(1, "Experience is required"),
-  SalaryBymonth: z.string().min(1, "Salary is required"),
+  address: z.string(),
+  qualification: z.string(),
+  subjects: z.string(),
+  nationalId: z.string().optional(),
+  experience: z.string(),
+  SalaryBymonth: z.string(),
+  notes: z.string().optional(),
 });
 
 const RegTeachers = () => {
@@ -44,21 +46,48 @@ const RegTeachers = () => {
       gender: "",
       contact: "",
       address: "",
+      nationalId: "",
       qualification: "",
       subjects: "",
       SalaryBymonth: "",
+      notes: "",
       experience: "",
     },
   });
+  const dob = form.watch("dob");
+  useEffect(() => {
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
 
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      form.setValue("age", age);
+    }
+  }, [dob, form]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   useEffect(() => {
     const fetchData = async () => {
       try {
         const subjectsData = await callGetAllsubjectssApi();
         setSubjects(subjectsData.subjects || []);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching data:", err);
+      } catch (error) {
+        console.error("Error fetching subjects", error);
+        toast.error("Failed to load subjects data");
+      } finally {
         setIsLoading(false);
       }
     };
@@ -66,20 +95,23 @@ const RegTeachers = () => {
   }, []);
 
   const handleSubmit = async (formData) => {
-    if (isSubmitting) return; // Prevent multiple submissions
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const payload = {
         ...formData,
-        subjectIds: [formData.subjects], // Convert to array for backend
+        subjectIds: [formData.subjects],
       };
 
       await callCreateTeacherApi(payload);
       toast.success("Teacher registered successfully!");
       form.reset();
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
-      console.error("Registration error:", error);
+      const message =
+        error.response?.data?.message ||
+        "Failed to register staff. Please try again.";
+      toast.error(message);
+      console.error("Error registering staff:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +119,7 @@ const RegTeachers = () => {
 
   const enhancedFormControls = TeacherFormControls.map((control) => {
     const baseStyle =
-      "w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500 transition duration-150 ease-in-out";
+      "w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500";
 
     if (control.id === "subjects") {
       return {
@@ -102,7 +134,9 @@ const RegTeachers = () => {
 
     return { ...control, className: baseStyle };
   });
+
   if (isLoading) return <GlobalLoader />;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 px-4 py-8 sm:py-12">
       {/* Header Section */}
@@ -112,20 +146,18 @@ const RegTeachers = () => {
             Teacher Registration
           </h2>
           <p className="text-sm md:text-base text-gray-600 mt-1">
-            Register new teachers with professional details
+            Register new teachers
           </p>
         </div>
 
         <div className="flex flex-col items-center md:items-end gap-2">
-          <h2 className="text-lg font-medium text-blue-700">
-            View Teacher Records
-          </h2>
-          <Link to="/admin/dashboard/TeacherInfo">
+          <h2 className="text-lg font-medium text-blue-700">View Teachers</h2>
+          <Link to="/admin/dashboard/allTeacher">
             <Button
               variant="outline"
               className="border-blue-600 text-blue-600 hover:bg-blue-50"
             >
-              Teacher Directory
+              Teachers
             </Button>
           </Link>
         </div>
@@ -133,67 +165,30 @@ const RegTeachers = () => {
 
       {/* Form Container */}
       <div className="flex justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 lg:p-10 space-y-8"
-        >
-          {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-6"
-            >
-              {[...Array(7)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-1/4 rounded-full" />
-                  <Skeleton className="h-10 rounded-xl" />
-                </div>
-              ))}
-              <Skeleton className="h-12 rounded-xl mt-4" />
-            </motion.div>
-          ) : (
-            <CommonForm
-              formControls={enhancedFormControls}
-              form={form}
-              handleSubmit={handleSubmit}
-              btnText={isSubmitting ? "Registering..." : "Register Teacher"}
-              className="space-y-6"
-              inputClassName="w-full rounded-lg md:rounded-xl border border-gray-300 bg-white px-4 py-2.5 md:py-3 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500 transition duration-150 ease-in-out"
-              labelClassName="block text-sm font-medium text-black"
-              errorClassName="text-red-500 text-xs mt-1"
-              buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-300 ease-in-out relative"
-              buttonProps={{
-                disabled: isSubmitting,
-                children: isSubmitting ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1 }}
-                    />
-                    <span>Registering...</span>
-                  </div>
-                ) : (
-                  "Register Teacher"
-                ),
-              }}
-              customLayout={{
-                grid: [
-                  ["fullName", "email"],
-                  ["dob", "age"],
-                  ["gender", "contact"],
-                  ["qualification", "experience"],
-                  ["subjects", "SalaryBymonth"],
-                  ["address"],
-                ],
-                gridClassName: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                fullWidthFields: ["address"],
-              }}
-            />
-          )}
-        </motion.div>
+        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 lg:p-10 space-y-8">
+          <CommonForm
+            formControls={enhancedFormControls}
+            form={form}
+            handleSubmit={handleSubmit}
+            btnText={isSubmitting ? <ButtonLoader /> : "Register Teacher"}
+            className="space-y-6"
+            inputClassName="w-full rounded-lg md:rounded-xl border border-gray-300 bg-white px-4 py-2.5 md:py-3 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black focus:border-indigo-500"
+            labelClassName="block text-sm font-medium text-black"
+            // errorClassName="text-red-500 text-xs mt-1"
+            buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md"
+            customLayout={{
+              grid: [
+                ["fullName", "email"],
+                ["dob", "age"],
+                ["gender", "contact"],
+                ["qualification", "experience"],
+                ["subjects", "SalaryBymonth"],
+                ["address", "nationalId"],
+                ["notes"],
+              ],
+            }}
+          />
+        </div>
       </div>
     </div>
   );

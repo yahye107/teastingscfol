@@ -81,18 +81,8 @@ const AdminDash = () => {
         </AnimatePresence>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-auto bg-white">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 overflow-auto md:overflow-auto bg-gray-100">
+          <Outlet />
         </main>
       </div>
     </div>

@@ -14,6 +14,97 @@ export const LoginFormControls = [
     type: "password",
   },
 ];
+export const StaffFormControls = [
+  {
+    id: "fullName",
+    label: "Full Name",
+    placeholder: "Enter full name (First, Middle, Last)",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "Enter email address",
+    componentType: "input",
+    type: "email",
+  },
+  {
+    id: "dob",
+    label: "Date of Birth",
+    placeholder: "Select date of birth",
+    componentType: "input",
+    type: "date",
+  },
+  {
+    id: "gender",
+    label: "Gender",
+    placeholder: "Select gender",
+    componentType: "select",
+    options: [
+      { value: "male", label: "Male" },
+      { value: "female", label: "Female" },
+    ],
+  },
+  {
+    id: "nationalId",
+    label: "National ID",
+    placeholder: "Enter national ID",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "jobTitle",
+    label: "Job Title",
+    placeholder: "Enter job title or position",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "employmentType",
+    label: "Employment Type",
+    placeholder: "Select employment type",
+    componentType: "select",
+    options: [
+      { value: "Full-time", label: "Full-time" },
+      { value: "Part-time", label: "Part-time" },
+      // { id: "contract", label: "Contract" },
+    ],
+  },
+  {
+    id: "educationalQualifications",
+    label: "Educational Qualifications",
+    placeholder: "Enter qualifications (e.g. B.Sc, M.A., PhD)",
+    componentType: "input",
+  },
+  // {
+  //   id: "certifications",
+  //   label: "Certifications / Skills",
+  //   placeholder: "Enter certifications or skills",
+  //   componentType: "textarea",
+  // },
+  {
+    id: "age",
+    label: "Age",
+    placeholder: "Enter age",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "SalaryBymonth",
+    label: "Monthly Pay",
+    placeholder: "Enter salary amount",
+    componentType: "input",
+    type: "number",
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    placeholder: "Enter additional notes",
+    componentType: "textarea",
+  },
+];
+
 export const ParantsFormControls = [
   {
     id: "fullName",
@@ -139,6 +230,19 @@ export const StudentFormControls = [
     componentType: "input",
     type: "number",
   },
+  {
+    id: "nationalId",
+    label: "National ID",
+    placeholder: "Enter national ID",
+    componentType: "input",
+    type: "text",
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    placeholder: "Enter additional notes",
+    componentType: "textarea",
+  },
 ];
 export const TeacherFormControls = [
   {
@@ -154,6 +258,13 @@ export const TeacherFormControls = [
     type: "email",
     componentType: "input",
     placeholder: "Enter teacher's email",
+  },
+  {
+    id: "nationalId",
+    label: "National ID",
+    placeholder: "Enter national ID",
+    componentType: "input",
+    type: "text",
   },
   {
     id: "dob",
@@ -222,6 +333,12 @@ export const TeacherFormControls = [
     type: "select",
     placeholder: "Select subject",
     dynamic: true,
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    placeholder: "Enter additional notes",
+    componentType: "textarea",
   },
 ];
 ///////////
@@ -869,13 +986,13 @@ export const PaymentFormControls = [
       "December",
     ],
   },
-  {
-    id: "year",
-    label: "Year",
-    placeholder: "Enter year (e.g., 2025)",
-    componentType: "input",
-    type: "number",
-  },
+  // {
+  //   id: "year",
+  //   label: "Year",
+  //   placeholder: "Enter year (e.g., 2025)",
+  //   componentType: "input",
+  //   type: "number",
+  // },
   {
     id: "academicYear",
     label: "Academic Year",
@@ -909,7 +1026,7 @@ export const PaymentFormControls = [
     label: "Payment Method",
     placeholder: "e.g., Cash, Transfer",
     componentType: "search-select",
-    options: ["Cash", "Bank Transfer", "Mobile Money", "Check", "Other"],
+    options: ["Cash", "Bank Transfer", "Avc +", "Check", "Other"],
   },
   {
     id: "sentBy",

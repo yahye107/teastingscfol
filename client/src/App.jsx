@@ -68,6 +68,23 @@ import TheSlectedCHildrenGrade from "./components/parant/pages/TheSlectedCHildre
 import TheSelectedChildrenGrade from "./components/parant/pages/TheSlectedCHildrenGrade";
 import PrantFeeREcord from "./components/parant/pages/PrantFeeREcord";
 import PrantsMss from "./components/parant/pages/PrantsMss";
+import AllStudents from "./components/Admin/pages/AllStudetents";
+import StudentRecoredByid from "./components/Admin/pages/student/StudentRecoredByid";
+import StudentResultbyId from "./components/Admin/pages/student/StudentResultbyId";
+import AttendeceBySTudent from "./components/Admin/pages/student/AttendeceBySTudent";
+import Header from "./pages/thwebsite/Header";
+import AllParents from "./components/Admin/pages/parants/AllPrantes";
+import PrantOlne from "./components/Admin/pages/parants/PrantOlne";
+import Allteachers from "./components/Admin/pages/teacher/Allteachers";
+import Teacheronly from "./components/Admin/pages/teacher/Teacheronly";
+import CreateTeacherAttendece from "./components/Admin/pages/teacher/CreateTeacherAttendece";
+import Attendcebyteacher from "./components/Admin/pages/teacher/Attendcebyteacher";
+import TodaysAttendance from "./components/Admin/pages/teacher/Todey'sAttenedece";
+import AlltimeAttendce from "./components/Admin/pages/teacher/AlltimeAttendce";
+import Staff from "./components/Admin/pages/staff/Staff";
+import AllStaff from "./components/Admin/pages/staff/AllStaff";
+import StaffById from "./components/Admin/pages/staff/StaffById";
+import AssignSubjectsToTeacher from "./components/Admin/pages/teacher/subject/AssignSubjectsToTeacher";
 
 const App = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -124,16 +141,37 @@ const App = () => {
       {/* <Route path="/teacher" element={<TeacherDash />} /> */}
       <Route path="admin/dashboard" element={<AdminDash />}>
         <Route index element={<Home />} />
+        <Route path="header" element={<Header />} />
         <Route path="studentRegister" element={<RegStudents />} />
         <Route path="exam-halls" element={<HallExam />} />
         <Route path="Recordes" element={<Recordes />} />
         <Route path="Parantsregister" element={<Parants />} />
-        <Route path="parantinfo" element={<ParantsInfo />} />
+        <Route path="parantinfo" element={<AllParents />} />
+        <Route path="parant/:id" element={<PrantOlne />} />
+        <Route path="staff" element={<Staff />} />
+        <Route path="allstaff" element={<AllStaff />} />
+        <Route path="staff/:id" element={<StaffById />} />
+
         <Route path="StudentInfo" element={<StudentInfo />} />
+        <Route path="StudentInfobyid/:id" element={<AllStudents />} />
+        <Route path="studentRecord/:id" element={<StudentRecoredByid />} />
+        <Route path="studentAttendece/:id" element={<AttendeceBySTudent />} />
+        <Route path="StudentResultbyId/:id" element={<StudentResultbyId />} />
         <Route path="FeeRecords" element={<FeeRecords />} />
         <Route path="StudentHallInfo" element={<StdentHallinfo />} />
         <Route path="Tescher" element={<TeacherRegister />} />
         <Route path="TeacherInfo" element={<TeacherInfo />} />
+        <Route path="allTeacher" element={<Allteachers />} />
+        <Route
+          path="assignSubjectsToTeacher"
+          element={<AssignSubjectsToTeacher />}
+        />
+        <Route path="AttenedeceTeachers/:id" element={<Attendcebyteacher />} />
+        <Route path="teacher/:id" element={<Teacheronly />} />
+        <Route path="teacher" element={<CreateTeacherAttendece />} />
+        <Route path="teacher/Attendece/todey" element={<TodaysAttendance />} />
+        <Route path="teacher/All" element={<AlltimeAttendce />} />
+
         <Route path="Halls" element={<Halls />} />
         <Route path="class" element={<Class />} />
         <Route path="Subjects" element={<Subjects />} />
